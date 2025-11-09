@@ -35,7 +35,7 @@ export default function Navbar() {
           onClick={() => handleSetActive("hero")}
         >
           <Image
-            src="/logo.png"
+            src="/logo.PNG"
             alt="Logo"
             width={scrolled ? 100 : 180}
             height={scrolled ? 100 : 180}
