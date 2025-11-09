@@ -56,7 +56,7 @@ export default function Navbar() {
                 onClick={() => handleSetActive(item.id)}
                 className={`relative transition-all duration-200 hover:text-[#ff6600] ${
                   active === item.id ? "text-[#ff6600]" : "text-white"
-                } after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:h-[2px] after:bg-[#ff6600] hover:after:w-full after:transition-all ${
+                } after:content-[''] after:absolute after:left-0 after:-bottom-1 after:w-0 after:bg-[#ff6600] hover:after:w-full after:transition-all ${
                   active === item.id ? "after:w-full" : "after:w-0"
                 }`}
               >

@@ -33,7 +33,7 @@ export default function Hero() {
         <div className="hidden md:flex md:w-[45%] justify-center">
           <div className="relative w-[440px] h-[440px]">
             <Image
-              src="/hero-image.png"
+              // src="/hero-image.png"
               alt="Indumentaria personalizada"
               fill
               className="object-cover rounded-xl shadow-2xl border border-[#ff6600]/40"
