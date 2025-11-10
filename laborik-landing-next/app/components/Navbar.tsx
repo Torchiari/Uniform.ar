@@ -83,7 +83,7 @@ export default function Navbar() {
           <ul className="absolute top-full left-0 w-full bg-[#F8F5F0]/95 flex flex-col items-center py-4 gap-4 md:hidden text-lg font-semibold text-[#6B4A52]">
             {[
               { id: "catalog", label: "Catálogo" },
-              { id: "reviews", label: "Reseñas" },
+              // { id: "reviews", label: "Reseñas" },
               { id: "contact", label: "Contacto" },
             ].map((item) => (
               <li key={item.id}>
