@@ -1,10 +1,10 @@
-import "./globals.css"
-import ClientLayout from "./ClientLayout"
+import ClientLayout from "./ClientLayout";
+import "./globals.css";
 
 export const metadata = {
   title: "UNIFORM.AR",
   description: "Indumentaria de trabajo y uniformes.",
-}
+};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -13,6 +13,5 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>
-  )
+  );
 }
-
