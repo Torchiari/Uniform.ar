@@ -10,7 +10,7 @@ export default function Footer() {
         <div>
           <div className="flex items-center justify-center md:justify-start mb-3">
             <Image
-              src="/logo.PNG"
+              src="/logo.png"
               alt="Uniform.AR logo"
               width={80}
               height={60}
