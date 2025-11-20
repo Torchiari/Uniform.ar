@@ -132,9 +132,11 @@ export default function Reviews() {
               fill="none"
               stroke="currentColor"
               strokeWidth="1.7"
+              strokeLinecap="round"
+              strokeLinejoin="round"
             >
-              <circle cx="12" cy="8" r="4" />
-              <path d="M7 12l-1.5 8L12 17l6.5 3L17 12" />
+              <circle cx="12" cy="10" r="6" />
+              <path d="M9 16l-2 5 5-3 5 3-2-5" />
             </svg>
           </div>
           <h4 className="text-center font-semibold text-[#3E2E32] dark:text-[#F5EEF7] mb-2">

@@ -33,9 +33,6 @@ export default function Catalog() {
               <p className="text-[#7C6A64] dark:text-[#d8c8d1] text-sm leading-relaxed">
                 Descripción breve del producto o categoría destacada.
               </p>
-              <button className="mt-5 bg-[#6B4A52] dark:bg-[#745968] text-white px-5 py-2 rounded-md text-sm font-medium hover:bg-[#5a3f46] dark:hover:bg-[#5a4358] transition-all duration-300 shadow-md hover:shadow-lg">
-                Ver más
-              </button>
             </div>
           </div>
         ))}

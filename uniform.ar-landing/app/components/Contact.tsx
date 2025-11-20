@@ -14,6 +14,7 @@ export default function Contact() {
 
   const [openDropdown, setOpenDropdown] = useState(false)
   const [status, setStatus] = useState<"success" | "error" | "">("")
+  const [loading, setLoading] = useState(false)
 
   const toggleIndumentaria = (value: string) => {
     setForm((prev) => {
@@ -31,10 +32,21 @@ export default function Contact() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
+  // 🔹 VALIDACIÓN COMPLETA
+  const formIncompleto =
+    !form.empresa.trim() ||
+    !form.contacto.trim() ||
+    !form.empleados.trim() ||
+    form.indumentaria.length === 0 ||
+    !form.mensaje.trim()
+
   const handleSubmit = (e: any) => {
     e.preventDefault()
 
-    // 🔹 PREPARAR DATOS PARA EMAILJS
+    if (formIncompleto) return
+
+    setLoading(true)
+
     const templateParams = {
       empresa: form.empresa,
       contacto: form.contacto,
@@ -43,13 +55,12 @@ export default function Contact() {
       mensaje: form.mensaje,
     }
 
-    // 🔹 ENVÍO DEL MAIL SIN BACKEND
     emailjs
       .send(
-        "service_hihya7k", // ← CAMBIAR
+        "service_hihya7k",
         "template_83n3xbq",
         templateParams,
-        "YItQg6pN27jBvCQct" // ← CAMBIAR
+        "YItQg6pN27jBvCQct"
       )
       .then(() => {
         setStatus("success")
@@ -61,9 +72,8 @@ export default function Contact() {
           mensaje: "",
         })
       })
-      .catch(() => {
-        setStatus("error")
-      })
+      .catch(() => setStatus("error"))
+      .finally(() => setLoading(false))
   }
 
   const opcionesIndumentaria = [
@@ -85,14 +95,12 @@ export default function Contact() {
         Solicitá tu presupuesto
       </h2>
 
-      {/* MENSAJE DE ÉXITO */}
       {status === "success" && (
         <div className="max-w-3xl mx-auto mb-6 p-4 bg-green-100 text-green-700 rounded-lg text-center">
           ✅ Tu solicitud fue enviada correctamente. ¡Te contactaremos pronto!
         </div>
       )}
 
-      {/* MENSAJE DE ERROR */}
       {status === "error" && (
         <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-center">
           ❌ Ocurrió un error al enviar el formulario. Intentá nuevamente.
@@ -103,7 +111,6 @@ export default function Contact() {
         onSubmit={handleSubmit}
         className="max-w-3xl mx-auto bg-white dark:bg-[#3a2a31] rounded-2xl shadow-md border border-[#d6c9c2]/50 dark:border-[#745968]/40 p-8 md:p-10 space-y-6"
       >
-
         {/* Empresa */}
         <div>
           <label className="block mb-1 font-medium">Nombre de la empresa</label>
@@ -117,7 +124,13 @@ export default function Contact() {
 
         {/* Contacto */}
         <div>
-          <label className="block mb-1 font-medium">Contacto</label>
+          <label className="block mb-1 font-medium">
+            Contacto{" "}
+            <span className="text-sm text-[#917780] dark:text-[#c8b0ba]">
+                 (Email o número de celular)
+            </span>
+          </label>
+
           <input
             name="contacto"
             value={form.contacto}
@@ -129,18 +142,26 @@ export default function Contact() {
         {/* Empleados */}
         <div>
           <label className="block mb-1 font-medium">Cantidad de empleados</label>
-          <select
-            name="empleados"
-            value={form.empleados}
-            onChange={handleChange}
-            className="w-full p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840]"
-          >
-            <option value="">Seleccioná la cantidad</option>
-            <option value="1-10 empleados">1-10 empleados</option>
-            <option value="11-50 empleados">11-50 empleados</option>
-            <option value="51-100 empleados">51-100 empleados</option>
-            <option value="Más de 100 empleados">Más de 100 empleados</option>
-          </select>
+
+          <div className="relative">
+            <select
+              name="empleados"
+              value={form.empleados}
+              onChange={handleChange}
+              className="w-full appearance-none p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840]"
+            >
+              <option value="">Seleccioná la cantidad</option>
+              <option value="1-10 empleados">1-10 empleados</option>
+              <option value="11-50 empleados">11-50 empleados</option>
+              <option value="51-100 empleados">51-100 empleados</option>
+              <option value="Más de 100 empleados">Más de 100 empleados</option>
+            </select>
+
+            {/* MISMA FLECHA QUE EL DROPDOWN */}
+            <span className="absolute right-3 top-3 text-[#6B4A52] dark:text-[#E9D7E9] pointer-events-none">
+              ▼
+            </span>
+          </div>
         </div>
 
         {/* Indumentaria */}
@@ -192,9 +213,12 @@ export default function Contact() {
         {/* Botón */}
         <button
           type="submit"
-          className="w-full bg-[#6B4A52] dark:bg-[#745968] text-white py-3 rounded-md font-semibold hover:bg-[#5a3f46] dark:hover:bg-[#5a4358]"
+          disabled={formIncompleto || loading}
+          className={`w-full bg-[#6B4A52] dark:bg-[#745968] text-white py-3 rounded-md font-semibold 
+            hover:bg-[#5a3f46] dark:hover:bg-[#5a4358] transition-colors
+            ${formIncompleto || loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
-          Enviar presupuesto
+          {loading ? "Solicitando presupuesto..." : "Solicitar presupuesto"}
         </button>
       </form>
     </section>
