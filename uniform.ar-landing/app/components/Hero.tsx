@@ -14,8 +14,8 @@ export default function Hero() {
           </h1>
 
           <p className="text-[#6B4A52]/80 dark:text-[#E9D7E9] text-base sm:text-lg lg:text-[1.15rem] font-normal leading-relaxed max-w-md mx-auto md:mx-0">
-            Somos fabricantes de indumentaria laboral de calidad y distribuidores de una amplia línea de calzados de seguridad.
-            Ofrecemos atención personalizada y servicio integral a empresas y distribuidores de todo el país.
+            Brindamos indumentaria laboral de alta calidad y distribuimos una amplia línea de calzados de seguridad.
+            Ofrecemos atención personalizada y un servicio integral para empresas y distribuidores de todo el país.
           </p>
 
           <a

@@ -8,7 +8,7 @@ export default function Catalog() {
     >
       {/* Título */}
       <h2 className="text-4xl font-extrabold text-center mb-14 tracking-tight text-[#6B4A52] dark:text-[#E9D7E9]">
-        Catálogo
+        Nuestro catálogo
       </h2>
 
       {/* Grid de productos */}
