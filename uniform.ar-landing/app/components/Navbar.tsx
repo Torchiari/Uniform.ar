@@ -57,11 +57,13 @@ export default function Navbar() {
           />
         </a>
 
-        {/* Links desktop */}
+        {/* Links desktop (AQUÍ AGREGO Reseñas y FAQ's) */}
         <ul className="hidden md:flex items-center gap-12 text-lg">
           {[
             { id: "catalog", label: "Catálogo" },
+            { id: "reviews", label: "Reseñas" },
             { id: "contact", label: "Contacto" },
+            { id: "faq", label: "FAQ" },
           ].map((item) => (
             <li key={item.id}>
               <a
@@ -101,12 +103,14 @@ export default function Navbar() {
           </button>
         </div>
 
-        {/* Mobile menu */}
+        {/* Mobile menu (AQUÍ AGREGO Reseñas y FAQ's) */}
         {open && (
           <ul className="absolute top-full left-0 w-full bg-[#F8F5F0]/95 dark:bg-[#2a0010]/95 flex flex-col items-center py-4 gap-4 md:hidden text-lg font-semibold text-[#6B4A52] dark:text-white transition-colors duration-500">
             {[
               { id: "catalog", label: "Catálogo" },
+              { id: "reviews", label: "Reseñas" },
               { id: "contact", label: "Contacto" },
+              { id: "faq", label: "FAQ's" },
             ].map((item) => (
               <li key={item.id}>
                 <a
