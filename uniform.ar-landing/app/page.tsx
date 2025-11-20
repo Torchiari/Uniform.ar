@@ -1,7 +1,8 @@
 import Hero from "./components/Hero"
 import Catalog from "./components/Catalog"
-// import Reviews from "./components/Reviews"
+import Reviews from "./components/Reviews"
 import Contact from "./components/Contact"
+import Faq from "./components/Faq"
 
 export default function HomePage() {
   return (
@@ -9,8 +10,9 @@ export default function HomePage() {
     
       <Hero />
       <Catalog />
-      {/* <Reviews /> */}
+      <Reviews />
       <Contact />
+      <Faq />
     </main>
   )
 }
