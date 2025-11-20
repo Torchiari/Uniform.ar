@@ -42,14 +42,14 @@ export default function Navbar() {
           onClick={() => handleSetActive("hero")}
         >
           <Image
-            src="/navbarblanco.png"
+            src="/logo-oscuro.png"
             alt="Logo claro"
             width={scrolled ? 100 : 180}
             height={scrolled ? 100 : 180}
             className="dark:hidden"
           />
           <Image
-            src="/footer.png"
+            src="/logo-blanco.png"
             alt="Logo oscuro"
             width={scrolled ? 100 : 180}
             height={scrolled ? 100 : 180}
@@ -110,7 +110,7 @@ export default function Navbar() {
               { id: "catalog", label: "Catálogo" },
               { id: "reviews", label: "Reseñas" },
               { id: "contact", label: "Contacto" },
-              { id: "faq", label: "FAQ's" },
+              { id: "faq", label: "FAQ" },
             ].map((item) => (
               <li key={item.id}>
                 <a
