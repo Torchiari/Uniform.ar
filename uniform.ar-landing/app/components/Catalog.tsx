@@ -5,7 +5,7 @@ export default function Catalog() {
     {
       id: 1,
       nombre: "Remeras",
-      descripcion: "Descripción breve del producto.",
+      descripcion: "De tacto suave y acabado premium. Su hilado fino ofrece mayor confort y durabilidad.",
       imagen: "/catalog/5.jpg",
       talles: ["S", "M", "L", "XL", "XXL"],
       colores: ["#000000", "#FFFFFF", "#0D1A3A", "#8DA78A", "#9A9A9A", "#8F735B"],
@@ -14,7 +14,7 @@ export default function Catalog() {
     {
       id: 2,
       nombre: "Chombas",
-      descripcion: "Descripción breve del producto.",
+      descripcion: "Conocida por su textura con relieve tipo panal que permite una excelente ventilación y comodidad.",
       imagen: "/catalog/4.jpg",
       talles: ["S", "M", "L", "XL", "XXL"],
       colores: ["#000000", "#FFFFFF", "#0D1A3A", "#8DA78A", "#9A9A9A", "#8F735B"],
@@ -22,7 +22,7 @@ export default function Catalog() {
     {
       id: 3,
       nombre: "Camisas Grafa",
-      descripcion: "Descripción breve del producto.",
+      descripcion: "De tela resistente, ideal para trabajos industriales o de uso intensivo. Ofrece durabilidad, protección gran y confort. Su tejido asegura resistencia al desgaste y buena ventilación.",
       imagen: "/catalog/7.jpg",
       talles: ["S", "M", "L", "XL", "XXL"],
       colores: ["#000000", "#FFFFFF", "#0D1A3A", "#8DA78A", "#9A9A9A", "#8F735B"],
@@ -30,7 +30,7 @@ export default function Catalog() {
     {
       id: 4,
       nombre: "Bombacha de campo",
-      descripcion: "Descripción breve del producto.",
+      descripcion: "Prenda tradicional y funcional resistente que brinda comodidad, durabilidad y buena caída. Ideal para uso rural o cotidiano al ofrecer resistencia al desgaste y fácil mantenimiento.",
       imagen: "/catalog/8.jpg",
       talles: ["38", "40", "42", "44", "46", "48", "50", "52", "54"],
       colores: ["#000000", "#FFFFFF", "#0D1A3A", "#8DA78A", "#9A9A9A", "#8F735B"],
@@ -38,7 +38,7 @@ export default function Catalog() {
     {
       id: 5,
       nombre: "Buzo friza",
-      descripcion: "Descripción breve del producto.",
+      descripcion: " De interior afelpado y exterior liso, brinda abrigo medio con textura suave y confortable. Ideal para uso urbano o institucional, combinando calidez y comodidad.",
       imagen: "/catalog/9.jpg",
       talles: ["S", "M", "L", "XL", "XXL"],
       colores: ["#000000", "#FFFFFF", "#0D1A3A", "#8DA78A", "#9A9A9A", "#8F735B"],

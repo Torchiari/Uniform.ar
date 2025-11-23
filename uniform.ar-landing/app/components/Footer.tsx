@@ -28,7 +28,7 @@ export default function Footer() {
           <h3 className="text-lg font-semibold text-[#D8CFC8] mb-4 text-center">Contacto</h3>
           <ul className="space-y-2 text-sm text-[#C8BEB8] text-center">
             <li>📍 Buenos Aires, Argentina</li>
-            <li>📞 +54 9 11 1234-5678</li>
+            <li>📞 +54 9 11 3800-5433</li>
             <li className="flex items-center justify-center gap-2">
               <FaEnvelope className="text-[#9A7383]" />
               uniformarindumentaria@gmail.com
