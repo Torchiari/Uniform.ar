@@ -62,7 +62,7 @@ export default function Navbar() {
           {[
             { id: "catalog", label: "Catálogo" },
             { id: "reviews", label: "Reseñas" },
-            { id: "contact", label: "Contacto" },
+            { id: "contact", label: "Solicitá tu presupuesto" },
             { id: "faq", label: "FAQ" },
           ].map((item) => (
             <li key={item.id}>

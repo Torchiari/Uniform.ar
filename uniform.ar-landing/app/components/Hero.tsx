@@ -23,27 +23,32 @@ export default function Hero() {
       {/* Contenido */}
       <div className="relative z-10 max-w-3xl mx-auto px-6 flex flex-col items-center gap-6 text-white">
 
-        <h1 className="text-4xl sm:text-5xl font-extrabold leading-tight drop-shadow-xl">
-          Indumentaria de trabajo y uniformes
+        {/* Título con borde/sombra violeta */}
+        <h1
+          className="text-4xl sm:text-5xl font-extrabold leading-tight text-white"
+          style={{
+            textShadow: "0 4px 20px rgba(0,0,0,0.6)",
+          }}
+        >
+          Diseñamos lo que viste a tu equipo, y refleja la identidad de tu empresa.
         </h1>
 
+
         <p className="text-lg sm:text-xl font-light max-w-2xl drop-shadow-md">
-          Brindamos indumentaria laboral de alta calidad y distribuimos una amplia
-          línea de calzados de seguridad. Ofrecemos atención personalizada y un servicio
-          integral para empresas y distribuidores de todo el país.
+          Indumentaria personalizada para que tu marca se vea tan profesional como lo que hacés.
         </p>
 
         {/* Botones */}
         <div className="flex flex-col sm:flex-row gap-4 mt-4">
 
-          {/* Whatsapp (estilo violeta original) */}
+          {/* Botón WhatsApp VERDE */}
           <a
             href="https://wa.me/+5491138005433?text=Hola!%20Quisiera%20hacer%20una%20consulta"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-[#6B4A52] text-[#F8F5F0] px-8 py-3 rounded-md text-lg font-semibold shadow-md hover:bg-[#5D3F47] hover:shadow-lg transition-all duration-300"
+            className="inline-flex items-center gap-2 bg-[#25D366] text-white px-8 py-3 rounded-md text-lg font-semibold shadow-md hover:bg-[#1EBE5A] hover:shadow-lg transition-all duration-300"
           >
-            {/* Ícono WhatsApp blanco */}
+            {/* Ícono WhatsApp */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="22"
@@ -58,13 +63,13 @@ export default function Hero() {
             Contactanos por WhatsApp
           </a>
 
-          {/* Descargar catálogo (mismo estilo + ícono) */}
+          {/* Botón Descargar Catálogo (nuevo color) */}
           <a
             href="/catalogo.pdf"
             download
-            className="inline-flex items-center gap-2 bg-[#6B4A52] text-[#F8F5F0] px-8 py-3 rounded-md text-lg font-semibold shadow-md hover:bg-[#5D3F47] hover:shadow-lg transition-all duration-300"
+            className="inline-flex items-center gap-2 bg-[#7C5983] text-white px-8 py-3 rounded-md text-lg font-semibold shadow-md hover:bg-[#6a4a71] hover:shadow-lg transition-all duration-300"
           >
-            {/* Ícono de catálogo */}
+            {/* Ícono catálogo */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="22"
