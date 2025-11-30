@@ -29,21 +29,19 @@ export default function PreguntasPage() {
   }
 
   return (
-    <section 
-    id="faq"
-    className="min-h-screen bg-[#F8F5F0] dark:bg-[#2e1f27] text-[#3E2E32] dark:text-[#F5EEF7] py-24 px-6 md:px-16 lg:px-32 transition-colors duration-500">
-
-      {/* Título */}
-      <h1 className="text-4xl font-bold text-center mb-14 text-[#6B4A52] dark:text-[#E9D7E9]">
+    <section
+      id="faq"
+      className="min-h-screen bg-[#2e1f27] text-[#F5EEF7] py-24 px-6 md:px-16 lg:px-32"
+    >
+      <h1 className="text-4xl font-bold text-center mb-14 text-[#E9D7E9]">
         Preguntas frecuentes
       </h1>
 
-      {/* Contenedor de preguntas */}
       <div className="max-w-4xl mx-auto space-y-6">
         {faqs.map((faq, i) => (
           <div
             key={i}
-            className="bg-white dark:bg-[#3a2a31] rounded-2xl shadow-md border border-[#d6c9c2]/50 dark:border-[#745968]/40 transition-all duration-300"
+            className="bg-[#3a2a31] rounded-2xl shadow-md border border-[#745968]/40 transition-all duration-300"
           >
             {/* Pregunta */}
             <button
@@ -63,7 +61,7 @@ export default function PreguntasPage() {
 
             {/* Respuesta */}
             {openIndex === i && (
-              <div className="px-6 pb-6 text-[#6B4A52] dark:text-[#E9D7E9] leading-relaxed">
+              <div className="px-6 pb-6 text-[#E9D7E9] leading-relaxed">
                 {faq.answer}
               </div>
             )}

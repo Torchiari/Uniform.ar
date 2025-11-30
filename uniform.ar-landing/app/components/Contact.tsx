@@ -32,7 +32,6 @@ export default function Contact() {
     setForm({ ...form, [e.target.name]: e.target.value })
   }
 
-  // 🔹 VALIDACIÓN COMPLETA
   const formIncompleto =
     !form.empresa.trim() ||
     !form.contacto.trim() ||
@@ -44,7 +43,6 @@ export default function Contact() {
     e.preventDefault()
 
     if (formIncompleto) return
-
     setLoading(true)
 
     const templateParams = {
@@ -57,10 +55,10 @@ export default function Contact() {
 
     emailjs
       .send(
-        "service_hihya7k",
-        "template_83n3xbq",
+        "service_njai058",
+        "template_aj4jisq",
         templateParams,
-        "YItQg6pN27jBvCQct"
+        "jAx47VT5GDYTnpi1b"
       )
       .then(() => {
         setStatus("success")
@@ -90,27 +88,27 @@ export default function Contact() {
   return (
     <section
       id="contact"
-      className="bg-[#F8F5F0] text-[#3E2E32] dark:bg-[#2e1f27] dark:text-[#F5EEF7] py-24 px-6 md:px-16 lg:px-28"
+      className="bg-[#2e1f27] text-[#F5EEF7] py-24 px-6 md:px-16 lg:px-28"
     >
-      <h2 className="text-4xl font-extrabold text-center mb-8 tracking-tight text-[#6B4A52] dark:text-[#E9D7E9]">
+      <h2 className="text-4xl font-extrabold text-center mb-8 tracking-tight text-[#E9D7E9]">
         Solicitá tu presupuesto
       </h2>
 
       {status === "success" && (
-        <div className="max-w-3xl mx-auto mb-6 p-4 bg-green-100 text-green-700 rounded-lg text-center">
+        <div className="max-w-3xl mx-auto mb-6 p-4 bg-green-700/20 text-green-300 rounded-lg text-center">
           ✅ Tu solicitud fue enviada correctamente. ¡Te contactaremos pronto!
         </div>
       )}
 
       {status === "error" && (
-        <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-100 text-red-700 rounded-lg text-center">
+        <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-700/20 text-red-300 rounded-lg text-center">
           ❌ Ocurrió un error al enviar el formulario. Intentá nuevamente.
         </div>
       )}
 
       <form
         onSubmit={handleSubmit}
-        className="max-w-3xl mx-auto bg-white dark:bg-[#3a2a31] rounded-2xl shadow-md border border-[#d6c9c2]/50 dark:border-[#745968]/40 p-8 md:p-10 space-y-6"
+        className="max-w-3xl mx-auto bg-[#3a2a31] rounded-2xl shadow-md border border-[#745968]/40 p-8 md:p-10 space-y-6"
       >
         {/* Empresa */}
         <div>
@@ -119,7 +117,7 @@ export default function Contact() {
             name="empresa"
             value={form.empresa}
             onChange={handleChange}
-            className="w-full p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840]"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
           />
         </div>
 
@@ -127,8 +125,8 @@ export default function Contact() {
         <div>
           <label className="block mb-1 font-medium">
             Contacto{" "}
-            <span className="text-sm text-[#917780] dark:text-[#c8b0ba]">
-                 (Email o número de celular)
+            <span className="text-sm text-[#c8b0ba]">
+              (Email o número de celular)
             </span>
           </label>
 
@@ -136,7 +134,7 @@ export default function Contact() {
             name="contacto"
             value={form.contacto}
             onChange={handleChange}
-            className="w-full p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840]"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
           />
         </div>
 
@@ -149,7 +147,7 @@ export default function Contact() {
               name="empleados"
               value={form.empleados}
               onChange={handleChange}
-              className="w-full appearance-none p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840]"
+              className="w-full appearance-none p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
             >
               <option value="">Seleccioná la cantidad</option>
               <option value="1-10 empleados">1-10 empleados</option>
@@ -158,8 +156,7 @@ export default function Contact() {
               <option value="Más de 100 empleados">Más de 100 empleados</option>
             </select>
 
-            {/* MISMA FLECHA QUE EL DROPDOWN */}
-            <span className="absolute right-3 top-3 text-[#6B4A52] dark:text-[#E9D7E9] pointer-events-none">
+            <span className="absolute right-3 top-3 text-[#E9D7E9] pointer-events-none">
               ▼
             </span>
           </div>
@@ -170,20 +167,20 @@ export default function Contact() {
           <label className="block mb-1 font-medium">Indumentaria de interés</label>
 
           <div
-            className="w-full p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840] cursor-pointer relative"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] cursor-pointer relative text-white"
             onClick={() => setOpenDropdown(!openDropdown)}
           >
             {form.indumentaria.length > 0
               ? form.indumentaria.join(", ")
               : "Seleccioná el tipo de indumentaria"}
 
-            <span className="absolute right-3 top-3 text-[#6B4A52] dark:text-[#E9D7E9]">
+            <span className="absolute right-3 top-3 text-[#E9D7E9]">
               ▼
             </span>
           </div>
 
           {openDropdown && (
-            <div className="mt-2 border rounded-md bg-white dark:bg-[#3a2a31] border-[#d6c9c2] dark:border-[#745968] p-3 space-y-2 shadow-lg">
+            <div className="mt-2 border rounded-md bg-[#3a2a31] border-[#745968]/40 p-3 space-y-2 shadow-lg">
               {opcionesIndumentaria.map((op) => (
                 <label key={op} className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -191,7 +188,7 @@ export default function Contact() {
                     checked={form.indumentaria.includes(op)}
                     onChange={() => toggleIndumentaria(op)}
                   />
-                  <span className="text-[#3E2E32] dark:text-white">{op}</span>
+                  <span className="text-white">{op}</span>
                 </label>
               ))}
             </div>
@@ -207,7 +204,7 @@ export default function Contact() {
             onChange={handleChange}
             rows={4}
             placeholder="Contanos más detalles..."
-            className="w-full p-3 rounded-md border border-[#e0d5cf] dark:border-[#745968]/40 bg-[#F9F6F3] dark:bg-[#4a3840]"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
           />
         </div>
 
@@ -215,8 +212,8 @@ export default function Contact() {
         <button
           type="submit"
           disabled={formIncompleto || loading}
-          className={`w-full bg-[#6B4A52] dark:bg-[#745968] text-white py-3 rounded-md font-semibold 
-            hover:bg-[#5a3f46] dark:hover:bg-[#5a4358] transition-colors
+          className={`w-full bg-[#745968] text-white py-3 rounded-md font-semibold 
+            hover:bg-[#5a4358] transition-colors
             ${formIncompleto || loading ? "opacity-50 cursor-not-allowed" : ""}`}
         >
           {loading ? "Solicitando presupuesto..." : "Solicitar presupuesto"}
