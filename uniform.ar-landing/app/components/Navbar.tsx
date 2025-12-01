@@ -110,18 +110,6 @@ export default function Navbar() {
               </li>
             ))}
 
-            {/* Instagram también en mobile */}
-            <li>
-              <a
-                href="https://www.instagram.com/uniform.ar/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 hover:opacity-80"
-              >
-                <Instagram size={26} strokeWidth={1.75} />
-                <span>Instagram</span>
-              </a>
-            </li>
           </ul>
         )}
       </nav>
