@@ -55,10 +55,10 @@ export default function Contact() {
 
     emailjs
       .send(
-        "service_njai058",
-        "template_aj4jisq",
+        process.env.NEXT_PUBLIC_EMAILJS_SERVICE!,
+        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE!,
         templateParams,
-        "jAx47VT5GDYTnpi1b"
+        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC!
       )
       .then(() => {
         setStatus("success")
