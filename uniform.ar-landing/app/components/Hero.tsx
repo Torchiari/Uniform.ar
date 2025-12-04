@@ -1,20 +1,20 @@
 "use client"
-import Image from "next/image"
 
 export default function Hero() {
   return (
     <section
       id="hero"
-      className="relative w-full h-[90vh] flex items-center justify-center text-center"
+      className="relative w-full h-[90vh] flex items-center justify-center text-center overflow-hidden"
     >
 
-      {/* Imagen de fondo */}
-      <Image
-        src="/fondo.jpg"
-        alt="Fondo"
-        fill
-        priority
-        className="object-cover brightness-75"
+      {/* Video de fondo */}
+      <video
+        src="/video.fondo.mp4"
+        autoPlay
+        loop
+        muted
+        playsInline
+        className="absolute w-full h-full object-cover brightness-75"
       />
 
       {/* Overlay oscuro */}
@@ -59,7 +59,7 @@ export default function Hero() {
 
           {/* Botón Catálogo */}
           <a
-            href="/catalogo.pdf"
+            href="/Catálogo Uniformar 2025.pdf"
             download
             className="inline-flex items-center gap-2 bg-[#745968] text-white px-8 py-3 rounded-md text-lg font-semibold shadow-md hover:bg-[#624955] hover:shadow-lg transition-all duration-300"
           >

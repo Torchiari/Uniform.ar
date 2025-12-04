@@ -27,7 +27,7 @@ export default function Reviews() {
     >
       {/* Título */}
       <h2 className="text-4xl font-bold text-center mb-14 tracking-tight text-white">
-        Marcas que nos eligieron para vestir su identidad
+        Empresas que nos eligieron para vestir su identidad
       </h2>
 
       {/* Grid de reviews */}

@@ -18,7 +18,7 @@ export default function Footer() {
             />
           </div>
           <p className="text-sm text-[#C8BEB8] leading-relaxed text-center">
-            Indumentaria laboral y uniformes de calidad para empresas y distribuidores
+            Indumentaria laboral y uniformes de calidad para empresas
             de todo el país. Comprometidos con la excelencia y la comodidad en el trabajo.
           </p>
         </div>
@@ -42,7 +42,7 @@ export default function Footer() {
           <h3 className="text-lg font-semibold text-[#D8CFC8] mb-4 text-center">Seguinos</h3>
           <div className="flex justify-center gap-6 text-2xl">
             <a
-              href="https://www.instagram.com"
+              href="https://www.instagram.com/uniform.ar/"
               target="_blank"
               className="text-[#EDE8E3] hover:text-[#9A7383] transition-colors"
               aria-label="Instagram"

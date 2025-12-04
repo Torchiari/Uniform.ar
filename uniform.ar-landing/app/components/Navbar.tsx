@@ -45,6 +45,7 @@ export default function Navbar() {
         {/* Links desktop */}
         <ul className="hidden md:flex items-center gap-12 text-lg">
           {[
+            { id: "aboutus", label: "Sobre Nosotros" },
             { id: "reviews", label: "Reseñas" },
             { id: "contact", label: "Solicitá tu presupuesto" },
             { id: "faq", label: "FAQ" },
@@ -91,6 +92,7 @@ export default function Navbar() {
         {open && (
           <ul className="absolute top-full left-0 w-full bg-[#2e1f27]/95 flex flex-col items-center py-4 gap-4 md:hidden text-lg font-semibold text-white">
             {[
+              { id: "aboutus", label: "Sobre Nosotros" },
               { id: "reviews", label: "Reseñas" },
               { id: "contact", label: "Solicitá tu presupuesto" },
               { id: "faq", label: "FAQ" },
