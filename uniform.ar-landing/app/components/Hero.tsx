@@ -17,6 +17,8 @@ export default function Hero() {
         className="absolute w-full h-full object-cover brightness-75"
       />
 
+
+    
       {/* Overlay oscuro */}
       <div className="absolute inset-0 bg-black/50"></div>
 
