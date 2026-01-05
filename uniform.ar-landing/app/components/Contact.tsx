@@ -1,7 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import emailjs from "emailjs-com"
+
+// Detectamos la URL automáticamente:
+// Si existe la variable de Vercel, usa esa. Si no, usa localhost.
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 export default function Contact() {
   const [form, setForm] = useState({
@@ -45,24 +48,29 @@ export default function Contact() {
     if (formIncompleto) return;
     setLoading(true);
 
+    // Preparamos los datos para enviar al backend
     const body = {
       empresa: form.empresa,
       contacto: form.contacto,
       empleados: form.empleados,
-      indumentaria: form.indumentaria.join(", "),
+      indumentaria: form.indumentaria.join(", "), // Convertimos array a texto
       mensaje: form.mensaje,
     };
 
     try {
-      const res = await fetch("http://localhost:4000/mail/contact", {
+      // USAMOS LA URL DINÁMICA AQUÍ
+      const res = await fetch(`${API_URL}/mail/contact`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        throw new Error("Error en el servidor");
+      }
 
       setStatus("success");
+      // Limpiamos el formulario si salió bien
       setForm({
         empresa: "",
         contacto: "",
@@ -71,12 +79,12 @@ export default function Contact() {
         mensaje: "",
       });
     } catch (err) {
+      console.error(err);
       setStatus("error");
     } finally {
       setLoading(false);
     }
   };
-
 
   const opcionesIndumentaria = [
     "Remeras y Chombas",
@@ -99,14 +107,14 @@ export default function Contact() {
       </h2>
 
       {status === "success" && (
-        <div className="max-w-3xl mx-auto mb-6 p-4 bg-green-700/20 text-green-300 rounded-lg text-center">
+        <div className="max-w-3xl mx-auto mb-6 p-4 bg-green-700/20 text-green-300 rounded-lg text-center border border-green-500/30">
           ✅ Tu solicitud fue enviada correctamente. ¡Te contactaremos pronto!
         </div>
       )}
 
       {status === "error" && (
-        <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-700/20 text-red-300 rounded-lg text-center">
-          ❌ Ocurrió un error al enviar el formulario. Intentá nuevamente.
+        <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-700/20 text-red-300 rounded-lg text-center border border-red-500/30">
+          ❌ Ocurrió un error al enviar el formulario. Por favor intentá nuevamente.
         </div>
       )}
 
@@ -121,7 +129,7 @@ export default function Contact() {
             name="empresa"
             value={form.empresa}
             onChange={handleChange}
-            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white focus:outline-none focus:border-[#E9D7E9]"
           />
         </div>
 
@@ -138,7 +146,7 @@ export default function Contact() {
             name="contacto"
             value={form.contacto}
             onChange={handleChange}
-            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white focus:outline-none focus:border-[#E9D7E9]"
           />
         </div>
 
@@ -151,7 +159,7 @@ export default function Contact() {
               name="empleados"
               value={form.empleados}
               onChange={handleChange}
-              className="w-full appearance-none p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
+              className="w-full appearance-none p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white focus:outline-none focus:border-[#E9D7E9]"
             >
               <option value="">Seleccioná la cantidad</option>
               <option value="1-10 empleados">1-10 empleados</option>
@@ -186,11 +194,12 @@ export default function Contact() {
           {openDropdown && (
             <div className="mt-2 border rounded-md bg-[#3a2a31] border-[#745968]/40 p-3 space-y-2 shadow-lg">
               {opcionesIndumentaria.map((op) => (
-                <label key={op} className="flex items-center gap-2 cursor-pointer">
+                <label key={op} className="flex items-center gap-2 cursor-pointer hover:bg-[#4a3840] p-1 rounded">
                   <input
                     type="checkbox"
                     checked={form.indumentaria.includes(op)}
                     onChange={() => toggleIndumentaria(op)}
+                    className="accent-[#E9D7E9]"
                   />
                   <span className="text-white">{op}</span>
                 </label>
@@ -208,7 +217,7 @@ export default function Contact() {
             onChange={handleChange}
             rows={4}
             placeholder="Contanos más detalles..."
-            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white"
+            className="w-full p-3 rounded-md border border-[#745968]/40 bg-[#4a3840] text-white focus:outline-none focus:border-[#E9D7E9]"
           />
         </div>
 
@@ -217,8 +226,8 @@ export default function Contact() {
           type="submit"
           disabled={formIncompleto || loading}
           className={`w-full bg-[#745968] text-white py-3 rounded-md font-semibold 
-            hover:bg-[#5a4358] transition-colors
-            ${formIncompleto || loading ? "opacity-50 cursor-not-allowed" : ""}`}
+            hover:bg-[#5a4358] transition-colors shadow-lg
+            ${formIncompleto || loading ? "opacity-50 cursor-not-allowed" : "hover:scale-[1.01]"}`}
         >
           {loading ? "Solicitando presupuesto..." : "Solicitar presupuesto"}
         </button>
