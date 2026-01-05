@@ -39,40 +39,44 @@ export default function Contact() {
     form.indumentaria.length === 0 ||
     !form.mensaje.trim()
 
-  const handleSubmit = (e: any) => {
-    e.preventDefault()
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
 
-    if (formIncompleto) return
-    setLoading(true)
+    if (formIncompleto) return;
+    setLoading(true);
 
-    const templateParams = {
+    const body = {
       empresa: form.empresa,
       contacto: form.contacto,
       empleados: form.empleados,
       indumentaria: form.indumentaria.join(", "),
       mensaje: form.mensaje,
-    }
+    };
 
-    emailjs
-      .send(
-        process.env.NEXT_PUBLIC_EMAILJS_SERVICE!,
-        process.env.NEXT_PUBLIC_EMAILJS_TEMPLATE!,
-        templateParams,
-        process.env.NEXT_PUBLIC_EMAILJS_PUBLIC!
-      )
-      .then(() => {
-        setStatus("success")
-        setForm({
-          empresa: "",
-          contacto: "",
-          empleados: "",
-          indumentaria: [],
-          mensaje: "",
-        })
-      })
-      .catch(() => setStatus("error"))
-      .finally(() => setLoading(false))
-  }
+    try {
+      const res = await fetch("http://localhost:4000/mail/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) throw new Error();
+
+      setStatus("success");
+      setForm({
+        empresa: "",
+        contacto: "",
+        empleados: "",
+        indumentaria: [],
+        mensaje: "",
+      });
+    } catch (err) {
+      setStatus("error");
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   const opcionesIndumentaria = [
     "Remeras y Chombas",
