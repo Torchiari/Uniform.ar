@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// --- URL DE LA API (Detecta si es local o producción) ---
+// --- URL DE LA API ---
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
 // --- ESTRUCTURA DE DATOS ---
@@ -19,10 +19,9 @@ const TIPOS_PRENDA = [
   { id: "remera", nombre: "Remera" },
   { id: "chomba", nombre: "Chomba" },
   { id: "buzo", nombre: "Buzo" },
-  { id: "camisa", nombre: "Camisa grafa" },
+  { id: "camisa", nombre: "Camisa de grafa" },
 ];
 
-// Opciones de color para el texto
 const COLORES_TEXTO = [
     { nombre: "Negro", hex: "#000000", id: "negro" },
     { nombre: "Blanco", hex: "#FFFFFF", id: "blanco" },
@@ -36,93 +35,71 @@ const getPrendaSrc = (tipoId: string, colorId: string) => {
 export default function SimuladorCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   
-  // Estados para la selección actual de prenda
   const [tipoSeleccionado, setTipoSeleccionado] = useState(TIPOS_PRENDA[0].id);
   const [colorSeleccionado, setColorSeleccionado] = useState(COLORES[0].id);
-
-  // ESTADOS DEL LOGO
   const [logoSrc, setLogoSrc] = useState<string | null>(null);
   const [logoConfig, setLogoConfig] = useState({ x: 180, y: 150, width: 0, height: 0 });
-
-  // ESTADOS DEL TEXTO
   const [textoValue, setTextoValue] = useState("");
-  const [textoColor, setTextoColor] = useState(COLORES_TEXTO[0]); // Por defecto negro
+  const [textoColor, setTextoColor] = useState(COLORES_TEXTO[0]); 
   const [textoConfig, setTextoConfig] = useState({ x: 250, y: 300, fontSize: 30 });
-
-  // ESTADOS DE UI Y FORMULARIO
   const [loading, setLoading] = useState(false);
-  const [showModal, setShowModal] = useState(false); // Controla el modal
+  const [showModal, setShowModal] = useState(false);
   const [clientData, setClientData] = useState({ name: "", contact: "", message: "" });
   
-  // Función principal de dibujo
+  // --- LÓGICA DE DIBUJO ---
   const draw = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Limpiar canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // 1. Dibujar Prenda Base
     const baseImg = new Image();
     baseImg.src = getPrendaSrc(tipoSeleccionado, colorSeleccionado);
     
     baseImg.onload = () => {
       ctx.drawImage(baseImg, 0, 0, 500, 500);
 
-      // 2. Dibujar Logo (si existe)
       if (logoSrc) {
         const logoImg = new Image();
         logoImg.src = logoSrc;
         logoImg.onload = () => {
-            // Usamos las dimensiones del estado que ya mantienen la proporción
             ctx.drawImage(logoImg, logoConfig.x, logoConfig.y, logoConfig.width, logoConfig.height);
-            
-            // 3. Dibujar Texto (si existe) - Se dibuja DESPUÉS del logo para que quede arriba si se superponen
             drawText(ctx);
         };
       } else {
-          // Si no hay logo, dibujamos el texto directamente después de la prenda
           drawText(ctx);
       }
     };
 
     baseImg.onerror = () => {
-        console.error(`No se encontró la imagen: ${baseImg.src}`);
         ctx.fillStyle = "#f0f0f0";
         ctx.fillRect(0, 0, 500, 500);
         ctx.fillStyle = "#333";
         ctx.font = "20px Arial";
-        ctx.fillText("Imagen de prenda no disponible", 150, 250);
+        ctx.fillText("Imagen no disponible", 150, 250);
     };
   };
 
-  // Función auxiliar para dibujar el texto
   const drawText = (ctx: CanvasRenderingContext2D) => {
       if (!textoValue.trim()) return;
 
       ctx.font = `bold ${textoConfig.fontSize}px Arial, sans-serif`;
       ctx.fillStyle = textoColor.hex;
-      ctx.textAlign = "center"; // Centramos el texto en su punto X
+      ctx.textAlign = "center";
       ctx.textBaseline = "middle"; 
-      
-      // Sombra suave para que se lea mejor sobre cualquier fondo
       ctx.shadowColor = textoColor.id === 'blanco' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)';
       ctx.shadowBlur = 4;
       ctx.fillText(textoValue, textoConfig.x, textoConfig.y);
-      
-      // Resetear sombra para lo siguiente que se dibuje
       ctx.shadowColor = 'transparent';
       ctx.shadowBlur = 0;
   }
 
-  // Efecto para redibujar cuando cambia cualquier estado relevante
   useEffect(() => {
     draw();
   }, [tipoSeleccionado, colorSeleccionado, logoSrc, logoConfig, textoValue, textoConfig, textoColor]);
 
-  // Manejo de subida de logo para mantener relación de aspecto
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -130,16 +107,12 @@ export default function SimuladorCanvas() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const src = event.target?.result as string;
-      
-      // Pre-cargamos la imagen para calcular sus dimensiones naturales
       const img = new Image();
       img.onload = () => {
-          // Definimos un tamaño máximo inicial
           const maxInitialSize = 150;
           let newWidth = img.naturalWidth;
           let newHeight = img.naturalHeight;
 
-          // Lógica para escalar manteniendo proporción
           if (newWidth > maxInitialSize || newHeight > maxInitialSize) {
               const ratio = newWidth / newHeight;
               if (newWidth > newHeight) {
@@ -150,8 +123,6 @@ export default function SimuladorCanvas() {
                   newWidth = maxInitialSize * ratio;
               }
           }
-
-          // Centramos inicialmente
           const initialX = (500 - newWidth) / 2;
           const initialY = 200;
 
@@ -163,20 +134,12 @@ export default function SimuladorCanvas() {
     reader.readAsDataURL(file);
   };
 
-  // --- NUEVA LÓGICA DE ENVÍO CON MODAL ---
-  
-  // 1. Abrir modal
-  const handleOpenModal = () => {
-      setShowModal(true);
-  };
+  const handleOpenModal = () => setShowModal(true);
 
-  // 2. Enviar datos reales al backend
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     const canvas = canvasRef.current;
-    
-    // Aseguramos renderizado final antes de enviar
     draw();
 
     setTimeout(async () => {
@@ -198,8 +161,8 @@ export default function SimuladorCanvas() {
           
           if (res.ok) {
               alert("¡Diseño enviado con éxito! Nos pondremos en contacto pronto.");
-              setShowModal(false); // Cerrar modal
-              setClientData({ name: "", contact: "", message: "" }); // Limpiar form
+              setShowModal(false);
+              setClientData({ name: "", contact: "", message: "" });
           } else {
               alert("Hubo un error al enviar: " + data.message);
           }
@@ -212,12 +175,9 @@ export default function SimuladorCanvas() {
     }, 100);
   };
 
-
-  // --- FUNCIONES DE CONTROL (LOGO) ---
   const moveLogo = (dx: number, dy: number) => {
     setLogoConfig(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
   };
-
   const resizeLogo = (factor: number) => {
     setLogoConfig(prev => ({
       ...prev,
@@ -225,45 +185,47 @@ export default function SimuladorCanvas() {
       height: Math.max(20, prev.height * factor)
     }));
   };
-
-   // --- FUNCIONES DE CONTROL (TEXTO) ---
    const moveText = (dx: number, dy: number) => {
     setTextoConfig(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
   };
-
   const resizeTextLabel = (factor: number) => {
     setTextoConfig(prev => ({
       ...prev,
-      fontSize: Math.max(10, prev.fontSize * factor), // Mínimo 10px de fuente
+      fontSize: Math.max(10, prev.fontSize * factor),
     }));
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-10 items-start justify-center my-10 relative">
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start justify-center mt-24 mb-10 lg:my-10 relative px-4 lg:px-0">
       
       {/* Área del Canvas */}
-      <div className="bg-white p-4 shadow-xl rounded-xl border border-gray-200 sticky top-10">
+      <div className="bg-white p-2 md:p-4 shadow-xl rounded-xl border border-gray-200 sticky top-20 lg:top-10 z-10 w-full max-w-[500px]">
         <canvas 
             ref={canvasRef} 
             width={500} 
             height={500} 
-            className="border bg-gray-50 rounded-lg max-w-full h-auto transition-all duration-300"
+            className="border bg-gray-50 rounded-lg w-full h-auto block"
         />
+        <p className="text-center text-xs text-gray-400 mt-2 lg:hidden">
+            La imagen final tendrá alta calidad
+        </p>
       </div>
 
-      {/* Controles (DISEÑO ANTIGUO) */}
-      <div className="flex flex-col gap-6 w-full max-w-md bg-[#3a2a31] p-8 rounded-xl text-[#F5EEF7] shadow-2xl">
-        <h3 className="text-3xl font-bold text-[#E9D7E9] mb-4">Personalizá tu Uniforme</h3>
+      {/* Controles */}
+      <div className="flex flex-col gap-6 w-full max-w-[500px] lg:max-w-md bg-[#3a2a31] p-6 lg:p-8 rounded-xl text-[#F5EEF7] shadow-2xl z-0">
+        <h3 className="text-2xl lg:text-3xl font-bold text-[#E9D7E9] mb-2 lg:mb-4 text-center lg:text-left">
+            Personalizá tu Uniforme
+        </h3>
 
         {/* 1. Selección de Tipo de Prenda */}
-        <div className="bg-[#4a3840]/50 p-4 rounded-lg border border-[#745968]/50">
-          <label className="block mb-3 font-medium text-lg">1. ¿Qué prenda buscás?</label>
-          <div className="flex bg-[#4a3840] p-1 rounded-lg">
+        <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
+          <label className="block mb-3 font-medium text-base lg:text-lg">1. ¿Qué prenda buscás?</label>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-1 bg-[#4a3840] p-1 rounded-lg">
             {TIPOS_PRENDA.map((tipo) => (
               <button
                 key={tipo.id}
                 onClick={() => setTipoSeleccionado(tipo.id)}
-                className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
+                className={`py-2 px-1 text-xs md:text-sm font-semibold rounded-md transition-all ${
                   tipoSeleccionado === tipo.id
                     ? "bg-[#E9D7E9] text-[#3a2a31] shadow-sm"
                     : "text-[#F5EEF7]/70 hover:text-white hover:bg-white/10"
@@ -276,11 +238,11 @@ export default function SimuladorCanvas() {
         </div>
 
         {/* 2. Selección de Color */}
-        <div className="bg-[#4a3840]/50 p-4 rounded-lg border border-[#745968]/50">
-            <label className="block mb-3 font-medium text-lg">
-                2. Elegí el color <span className="text-sm font-normal text-[#E9D7E9]/80">(CONSULTÁ POR OTROS DISPONIBLES)</span>:
+        <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
+            <label className="block mb-3 font-medium text-base lg:text-lg">
+                2. Elegí el color
             </label>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 justify-center md:justify-start">
                 {COLORES.map((color) => (
                     <button
                         key={color.id}
@@ -301,34 +263,37 @@ export default function SimuladorCanvas() {
                     </button>
                 ))}
             </div>
-            <p className="mt-2 text-sm text-[#E9D7E9]">Color seleccionado: <span className="font-bold">{COLORES.find(c => c.id === colorSeleccionado)?.nombre}</span></p>
+            <p className="mt-2 text-sm text-[#E9D7E9] text-center md:text-left">
+                Color: <span className="font-bold">{COLORES.find(c => c.id === colorSeleccionado)?.nombre}</span>
+            </p>
         </div>
 
         {/* 3. Subida de Logo */}
-        <div className="bg-[#4a3840]/50 p-4 rounded-lg border border-[#745968]/50">
-            <label className="block mb-1 font-medium text-lg">3. Subí tu Logo</label>
+        <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
+            <label className="block mb-1 font-medium text-base lg:text-lg">3. Subí tu Logo</label>
             <p className="text-xs text-[#E9D7E9]/70 mb-3">
-                Recomendamos subir archivos en formato <strong>.PNG y sin fondo</strong> para un mejor resultado.
+                Formato <strong>.PNG sin fondo</strong> recomendado.
             </p>
             <input 
                 type="file" 
                 accept="image/png, image/jpeg, image/svg+xml"
                 onChange={handleLogoUpload}
-                className="w-full text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-[#745968] file:text-white hover:file:bg-[#8a6b7d] cursor-pointer"
+                className="w-full text-xs lg:text-sm text-gray-300 file:mr-2 lg:file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#745968] file:text-white hover:file:bg-[#8a6b7d] cursor-pointer"
             />
 
             {/* Controles de Logo */}
             {logoSrc && (
-                <div className="mt-4 bg-[#4a3840] p-3 rounded-lg">
-                    <label className="block mb-2 font-medium text-sm text-gray-300 text-center">Mover y ajustar tamaño del logo</label>
-                    <div className="flex justify-between items-center gap-2">
+                <div className="mt-4 bg-[#4a3840] p-2 lg:p-3 rounded-lg">
+                    <label className="block mb-2 font-medium text-xs lg:text-sm text-gray-300 text-center">Ajustar Logo</label>
+                    <div className="flex justify-between items-center gap-1 lg:gap-2">
                         <button onClick={() => resizeLogo(0.9)} className="control-btn" title="Achicar"> − </button>
+                        {/* D-PAD para mover */}
                         <div className="grid grid-cols-3 gap-1">
                             <div></div>
                             <button onClick={() => moveLogo(0, -10)} className="control-btn-arrow">↑</button>
                             <div></div>
                             <button onClick={() => moveLogo(-10, 0)} className="control-btn-arrow">←</button>
-                            <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9]">Logo</div>
+                            <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9] text-xs">Mover</div>
                             <button onClick={() => moveLogo(10, 0)} className="control-btn-arrow">→</button>
                             <div></div>
                             <button onClick={() => moveLogo(0, 10)} className="control-btn-arrow">↓</button>
@@ -341,8 +306,8 @@ export default function SimuladorCanvas() {
         </div>
 
         {/* 4. Agregar Texto */}
-        <div className="bg-[#4a3840]/50 p-4 rounded-lg border border-[#745968]/50">
-            <label className="block mb-3 font-medium text-lg">4. Agregar Texto (Opcional)</label>
+        <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
+            <label className="block mb-3 font-medium text-base lg:text-lg">4. Agregar Texto (Opcional)</label>
             
             <input 
                 type="text"
@@ -352,20 +317,19 @@ export default function SimuladorCanvas() {
                 className="w-full p-2 mb-3 rounded bg-[#4a3840] border border-[#745968] text-[#F5EEF7] placeholder-gray-500 focus:outline-none focus:border-[#E9D7E9]"
             />
 
-            <div className="mb-3 flex items-center gap-3">
+            <div className="mb-3 flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-3">
                 <span className="text-sm">Color del texto:</span>
-                <div className="flex gap-2 bg-[#4a3840] p-1 rounded">
+                <div className="flex gap-2 bg-[#4a3840] p-1 rounded overflow-x-auto max-w-full">
                 {COLORES_TEXTO.map((color) => (
                     <button
                         key={color.id}
                         onClick={() => setTextoColor(color)}
-                        className={`w-8 h-8 rounded transition-all flex items-center justify-center border ${
+                        className={`w-8 h-8 rounded shrink-0 transition-all flex items-center justify-center border ${
                             textoColor.id === color.id
                                 ? "border-[#E9D7E9] shadow-sm"
                                 : "border-transparent opacity-70 hover:opacity-100"
                         }`}
                         style={{ backgroundColor: color.hex }}
-                        title={color.nombre}
                     >
                         {textoColor.id === color.id && (
                            <span className={`text-sm ${color.id === 'blanco' ? 'text-black' : 'text-white'}`}>A</span>
@@ -377,22 +341,22 @@ export default function SimuladorCanvas() {
 
              {/* Controles de Texto */}
              {textoValue.trim() && (
-                <div className="mt-4 bg-[#4a3840] p-3 rounded-lg">
-                    <label className="block mb-2 font-medium text-sm text-gray-300 text-center">Mover y ajustar tamaño del texto</label>
-                    <div className="flex justify-between items-center gap-2">
-                        <button onClick={() => resizeTextLabel(0.9)} className="control-btn" title="Achicar letra"> <span className="text-xs">A</span>− </button>
+                <div className="mt-4 bg-[#4a3840] p-2 lg:p-3 rounded-lg">
+                    <label className="block mb-2 font-medium text-xs lg:text-sm text-gray-300 text-center">Ajustar Texto</label>
+                    <div className="flex justify-between items-center gap-1 lg:gap-2">
+                        <button onClick={() => resizeTextLabel(0.9)} className="control-btn" title="Achicar"> <span className="text-xs">A</span>− </button>
                         <div className="grid grid-cols-3 gap-1">
                             <div></div>
                             <button onClick={() => moveText(0, -10)} className="control-btn-arrow">↑</button>
                             <div></div>
                             <button onClick={() => moveText(-10, 0)} className="control-btn-arrow">←</button>
-                            <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9] text-sm">Txt</div>
+                            <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9] text-xs">Txt</div>
                             <button onClick={() => moveText(10, 0)} className="control-btn-arrow">→</button>
                             <div></div>
                             <button onClick={() => moveText(0, 10)} className="control-btn-arrow">↓</button>
                             <div></div>
                         </div>
-                        <button onClick={() => resizeTextLabel(1.1)} className="control-btn" title="Agrandar letra"> <span className="text-lg">A</span>+ </button>
+                        <button onClick={() => resizeTextLabel(1.1)} className="control-btn" title="Agrandar"> <span className="text-lg">A</span>+ </button>
                     </div>
                 </div>
             )}
@@ -400,7 +364,7 @@ export default function SimuladorCanvas() {
 
         <hr className="border-[#745968] my-2" />
 
-        {/* Botón Principal (Ahora abre el modal) */}
+        {/* Botón Principal */}
         <button
           onClick={handleOpenModal}
           disabled={loading || (!logoSrc && !textoValue.trim())}
@@ -410,16 +374,16 @@ export default function SimuladorCanvas() {
                 : "bg-[#E9D7E9] text-[#2e1f27] hover:bg-white hover:scale-[1.02] shadow-[#E9D7E9]/30"
             }`}
         >
-          {(!logoSrc && !textoValue.trim()) ? "Añadí un logo o texto para finalizar" : "Finalizar y Solicitar Presupuesto"}
+          {(!logoSrc && !textoValue.trim()) ? "Añadí algo para finalizar" : "Solicitar Presupuesto"}
         </button>
       </div>
 
-      {/* --- MODAL DE DATOS DE CONTACTO (AGREGADO) --- */}
+      {/* --- MODAL DE DATOS DE CONTACTO --- */}
       {showModal && (
-          <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
-              <div className="bg-[#3a2a31] p-8 rounded-xl max-w-md w-full border border-[#E9D7E9]/30 shadow-2xl">
+          <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm overflow-y-auto">
+              <div className="bg-[#3a2a31] p-6 sm:p-8 rounded-t-2xl sm:rounded-xl w-full max-w-md border-t sm:border border-[#E9D7E9]/30 shadow-2xl animate-slide-up sm:animate-none">
                   <h3 className="text-2xl font-bold text-[#E9D7E9] mb-2">¡Ya casi estamos!</h3>
-                  <p className="text-gray-300 mb-6 text-sm">Déjanos tus datos para enviarte el presupuesto de este diseño.</p>
+                  <p className="text-gray-300 mb-6 text-sm">Déjanos tus datos para enviarte el presupuesto.</p>
                   
                   <form onSubmit={submitForm} className="flex flex-col gap-4">
                       <div>
@@ -433,15 +397,15 @@ export default function SimuladorCanvas() {
                                  value={clientData.contact} onChange={e => setClientData({...clientData, contact: e.target.value})} placeholder="Ej: 11 1234 5678" />
                       </div>
                       <div>
-                          <label className="text-white text-sm font-semibold">Mensaje Adicional (Opcional)</label>
-                          <textarea className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none h-24 resize-none" 
+                          <label className="text-white text-sm font-semibold">Mensaje Adicional</label>
+                          <textarea className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none h-20 resize-none" 
                                  value={clientData.message} onChange={e => setClientData({...clientData, message: e.target.value})} placeholder="Ej: Necesito 20 unidades..." />
                       </div>
 
-                      <div className="flex gap-3 mt-4">
+                      <div className="flex gap-3 mt-4 mb-4 sm:mb-0">
                           <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10">Cancelar</button>
                           <button type="submit" disabled={loading} className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">
-                              {loading ? "Enviando..." : "Enviar Diseño"}
+                              {loading ? "Enviando..." : "Enviar"}
                           </button>
                       </div>
                   </form>
@@ -449,13 +413,13 @@ export default function SimuladorCanvas() {
           </div>
       )}
 
-      {/* Estilos utilitarios para los botones de control */}
+      {/* Estilos utilitarios */}
       <style jsx>{`
         .control-btn {
-            @apply bg-[#745968] hover:bg-[#8a6b7d] w-12 h-12 rounded-lg transition-colors font-bold text-xl flex items-center justify-center pb-1 shadow-sm;
+            @apply bg-[#745968] hover:bg-[#8a6b7d] w-12 h-12 rounded-lg transition-colors font-bold text-xl flex items-center justify-center pb-1 shadow-sm active:scale-95 touch-manipulation;
         }
         .control-btn-arrow {
-             @apply bg-[#745968] hover:bg-[#8a6b7d] w-8 h-8 rounded transition-colors font-bold flex items-center justify-center shadow-sm;
+             @apply bg-[#745968] hover:bg-[#8a6b7d] w-10 h-10 lg:w-8 lg:h-8 rounded transition-colors font-bold flex items-center justify-center shadow-sm active:scale-95 touch-manipulation;
         }
       `}</style>
     </div>
