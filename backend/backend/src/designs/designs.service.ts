@@ -7,21 +7,22 @@ export class DesignsService {
   
   async sendDesignByEmail(data: { image: string; clientName: string; clientContact: string; clientMessage?: string }) {
     
-    // 1. Configurar el transporte
     const transporter = nodemailer.createTransport({
-      service: 'gmail', 
-      
+      host: 'smtp.gmail.com',  // Escrito directo para asegurar
+      port: 465,               // Puerto SSL (Google lo prefiere desde servidores)
+      secure: true,            // True para 465
       auth: {
         user: process.env.MAIL_USER, 
         pass: process.env.MAIL_PASS, 
       },
-      // Configuraciones para evitar el Timeout en Render
       tls: {
-        rejectUnauthorized: false,
+        rejectUnauthorized: false, // Ignorar problemas de certificados
       },
-      family: 4, // Forzar IPv4
-      connectionTimeout: 10000, 
-      greetingTimeout: 10000,   
+      // --- TRUCOS PARA EVITAR BLOQUEO ---
+      family: 4,      // Forzar IPv4 (CRÍTICO en Render)
+      pool: true,     // Usar conexión persistente (a Google le gusta más)
+      logger: true,   // Esto nos mostrará el "chisme" completo en los logs
+      debug: true,    // Esto mostrará los detalles técnicos del error
     } as Options);
 
     // 2. Limpiar base64
