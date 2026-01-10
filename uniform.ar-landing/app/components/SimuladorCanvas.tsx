@@ -5,6 +5,10 @@ import { useEffect, useRef, useState } from "react";
 // --- URL DE LA API ---
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
+// --- ESTILOS EN VARIABLES ---
+const BTN_STYLE = "bg-[#745968] hover:bg-[#8a6b7d] w-12 h-12 rounded-lg transition-colors font-bold text-xl flex items-center justify-center pb-1 shadow-sm active:scale-95 touch-manipulation text-white cursor-pointer border-none";
+const ARROW_STYLE = "bg-[#745968] hover:bg-[#8a6b7d] w-10 h-10 lg:w-8 lg:h-8 rounded transition-colors font-bold flex items-center justify-center shadow-sm active:scale-95 touch-manipulation text-white cursor-pointer border-none";
+
 // --- ESTRUCTURA DE DATOS ---
 const COLORES = [
   { nombre: "Blanco", hex: "#FFFFFF", id: "blanco" },
@@ -15,7 +19,6 @@ const COLORES = [
   { nombre: "Marrón", hex: "#8F735B", id: "marron" },
 ];
 
-// AGREGADAS LAS NUEVAS PRENDAS
 const TIPOS_PRENDA = [
   { id: "remera", nombre: "Remera" },
   { id: "chomba", nombre: "Chomba" },
@@ -24,9 +27,10 @@ const TIPOS_PRENDA = [
   { id: "bermuda_cargo", nombre: "Bermuda Cargo" },
   { id: "pantalon_cargo", nombre: "Pantalón Cargo" },
   { id: "pantalon_trabajo", nombre: "Pantalón Trabajo" },
+  { id: "bombacha_campo", nombre: "Bombacha de Campo" },
 ];
 
-// Función para obtener la ruta (AHORA RECIBE EL LADO)
+// Función para obtener la ruta
 const getPrendaSrc = (tipoId: string, colorId: string, lado: 'frente' | 'dorso') => {
   return `/img/mockups/${tipoId}_${colorId}_${lado}.png`;
 };
@@ -53,6 +57,9 @@ export default function SimuladorCanvas() {
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [clientData, setClientData] = useState({ name: "", contact: "", message: "" });
+  
+  // Nuevo estado para controlar el flujo del envío: 'idle' (formulario), 'success' (éxito), 'error' (fallo)
+  const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
   
   // --- LÓGICA DE DIBUJO EN PANTALLA ---
   const draw = () => {
@@ -148,8 +155,16 @@ export default function SimuladorCanvas() {
     e.target.value = '';
   };
 
+  // Función para eliminar el logo actual
+  const handleDeleteLogo = () => {
+    if (ladoSeleccionado === 'frente') {
+      setLogoFrenteSrc(null);
+    } else {
+      setLogoDorsoSrc(null);
+    }
+  };
+
   // --- LOGICA DE MOVIMIENTO ---
-  // Unificamos las funciones para modificar el config del lado activo
   const updateCurrentConfig = (callback: (prev: any) => any) => {
       if (ladoSeleccionado === 'frente') {
           setConfigFrente(callback);
@@ -172,14 +187,12 @@ export default function SimuladorCanvas() {
 
   // --- GENERACIÓN DE IMAGEN COMBINADA (FRENTE + DORSO) ---
   const generarImagenCombinada = async (): Promise<string> => {
-      // Creamos un canvas temporal ancho (1000x500)
       const canvasTemp = document.createElement('canvas');
       canvasTemp.width = 1000;
       canvasTemp.height = 500;
       const ctx = canvasTemp.getContext('2d');
       if (!ctx) throw new Error("No context");
 
-      // Función auxiliar para dibujar un lado en el canvas temporal
       const dibujarLado = (lado: 'frente' | 'dorso', offsetX: number): Promise<void> => {
           return new Promise((resolve, reject) => {
               const bgSrc = getPrendaSrc(tipoSeleccionado, colorSeleccionado, lado);
@@ -191,10 +204,8 @@ export default function SimuladorCanvas() {
               imgBase.src = bgSrc;
               
               imgBase.onload = () => {
-                  // Dibujar fondo
                   ctx.drawImage(imgBase, offsetX, 0, 500, 500);
                   
-                  // Dibujar logo si existe
                   if (logoSrc) {
                       const imgLogo = new Image();
                       imgLogo.crossOrigin = "anonymous";
@@ -203,38 +214,37 @@ export default function SimuladorCanvas() {
                           ctx.drawImage(imgLogo, offsetX + config.x, config.y, config.width, config.height);
                           resolve();
                       };
-                      imgLogo.onerror = () => resolve(); // Si falla logo, seguimos igual
+                      imgLogo.onerror = () => resolve(); 
                   } else {
                       resolve();
                   }
                   
-                  // Texto indicador de lado (Opcional, para que se entienda en la foto)
                   ctx.fillStyle = "#999";
                   ctx.font = "bold 20px Arial";
                   ctx.fillText(lado.toUpperCase(), offsetX + 20, 480);
               };
               imgBase.onerror = () => {
-                  // Si no hay imagen de dorso (ej: pantalones), dejar blanco o seguir
                   resolve(); 
               };
           });
       };
 
-      // Dibujamos secuencialmente (primero frente, luego dorso)
-      await dibujarLado('frente', 0);   // Izquierda
-      await dibujarLado('dorso', 500);  // Derecha
+      await dibujarLado('frente', 0);   
+      await dibujarLado('dorso', 500);  
 
       return canvasTemp.toDataURL("image/png");
   };
 
-  const handleOpenModal = () => setShowModal(true);
+  const handleOpenModal = () => {
+    setSubmissionStatus('idle'); // Reseteamos el estado al abrir
+    setShowModal(true);
+  };
 
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-        // Generamos la imagen doble
         const base64Combinada = await generarImagenCombinada();
 
         const res = await fetch(`${API_URL}/designs/upload`, {
@@ -247,20 +257,16 @@ export default function SimuladorCanvas() {
               clientMessage: clientData.message + `\n(Prenda: ${tipoSeleccionado} - Color: ${colorSeleccionado})`
           }),
         });
-        const data = await res.json();
         
         if (res.ok) {
-            alert("¡Diseño enviado con éxito! Recibirás una imagen con ambas vistas.");
-            setShowModal(false);
+            setSubmissionStatus('success');
             setClientData({ name: "", contact: "", message: "" });
-            // Resetear logos opcionalmente
-            // setLogoFrenteSrc(null); setLogoDorsoSrc(null);
         } else {
-            alert("Hubo un error al enviar: " + data.message);
+            setSubmissionStatus('error');
         }
     } catch (error) {
         console.error(error);
-        alert("Error al procesar la imagen o conectar con servidor.");
+        setSubmissionStatus('error');
     } finally {
         setLoading(false);
     }
@@ -314,17 +320,16 @@ export default function SimuladorCanvas() {
             Personalizá tu Uniforme
         </h3>
 
-        {/* 1. Selección de Tipo de Prenda - CENTRADA Y ORDENADA */}
+        {/* 1. Selección de Tipo de Prenda (GRILLA EDITADA) */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
-          <label className="block mb-3 font-medium text-base lg:text-lg text-center">
-            1. ¿Qué prenda buscás?
-          </label>
-          <div className="flex flex-wrap justify-center gap-2 bg-[#4a3840] p-2 rounded-lg">
+          <label className="block mb-3 font-medium text-base lg:text-lg">1. ¿Qué prenda buscás?</label>
+          {/* CAMBIO AQUI: grid-cols-2 md:grid-cols-4 para que queden 2 filas de 4 */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-[#4a3840] p-2 rounded-lg">
             {TIPOS_PRENDA.map((tipo) => (
               <button
                 key={tipo.id}
                 onClick={() => setTipoSeleccionado(tipo.id)}
-                className={`py-2 px-3 text-sm font-semibold rounded-md transition-all ${
+                className={`py-2 px-1 text-xs font-semibold rounded-md transition-all h-full flex items-center justify-center text-center ${
                   tipoSeleccionado === tipo.id
                     ? "bg-[#E9D7E9] text-[#3a2a31] shadow-sm"
                     : "text-[#F5EEF7]/70 hover:text-white hover:bg-white/10"
@@ -367,7 +372,7 @@ export default function SimuladorCanvas() {
             </p>
         </div>
 
-        {/* 3. Subida de Logo (DINÁMICO SEGÚN LADO) */}
+        {/* 3. Subida de Logo (ALERTAS AGREGADAS) */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50 transition-all duration-300">
             <div className="flex justify-between items-center mb-1">
                 <label className="block font-medium text-base lg:text-lg">
@@ -378,52 +383,81 @@ export default function SimuladorCanvas() {
                 </span>
             </div>
             
-            <p className="text-xs text-[#E9D7E9]/70 mb-3">
-                Formato <strong>.PNG sin fondo</strong> recomendado.
-            </p>
-            
-            <input 
-                type="file" 
-                accept="image/png, image/jpeg, image/svg+xml"
-                onChange={handleLogoUpload}
-                // Usamos key para resetear el input si cambiamos de lado
-                key={ladoSeleccionado} 
-                className="w-full text-xs lg:text-sm text-gray-300 file:mr-2 lg:file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#745968] file:text-white hover:file:bg-[#8a6b7d] cursor-pointer"
-            />
+            {/* Si NO hay logo cargado en el lado actual */}
+            { !((ladoSeleccionado === 'frente' && logoFrenteSrc) || (ladoSeleccionado === 'dorso' && logoDorsoSrc)) && (
+              <>
+                <p className="text-xs text-[#E9D7E9]/70 mb-3">
+                    Formato <strong>.PNG sin fondo</strong> recomendado.
+                </p>
+                <input 
+                    type="file" 
+                    accept="image/png, image/jpeg, image/svg+xml"
+                    onChange={handleLogoUpload}
+                    key={ladoSeleccionado} 
+                    className="w-full text-xs lg:text-sm text-gray-300 file:mr-2 lg:file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#745968] file:text-white hover:file:bg-[#8a6b7d] cursor-pointer"
+                />
+                
+                {/* ALERTA: Si no hay NINGÚN logo cargado (ni frente ni dorso) */}
+                { !logoFrenteSrc && !logoDorsoSrc && (
+                    <div className="mt-3 bg-blue-500/10 border border-blue-500/20 p-2 rounded flex gap-2 items-start">
+                        <span className="text-blue-300">ℹ️</span>
+                        <p className="text-xs text-blue-100/90 leading-tight">
+                            Todavía no hay logos. Podés cargar un logo en el <strong>frente</strong> o en el <strong>dorso</strong> para visualizar tu uniforme.
+                        </p>
+                    </div>
+                )}
+              </>
+            )}
 
-            {/* Controles de Logo - Se muestran solo si hay logo en el lado actual */}
+            {/* Si HAY logo cargado en el lado actual, mostramos controles */}
             {((ladoSeleccionado === 'frente' && logoFrenteSrc) || (ladoSeleccionado === 'dorso' && logoDorsoSrc)) && (
-                <div className="mt-4 bg-[#4a3840] p-2 lg:p-3 rounded-lg animate-in fade-in slide-in-from-top-2">
-                    <label className="block mb-2 font-medium text-xs lg:text-sm text-gray-300 text-center">
-                        Ajustar Logo ({ladoSeleccionado})
-                    </label>
+                <div className="mt-2 bg-[#4a3840] p-2 lg:p-3 rounded-lg animate-in fade-in slide-in-from-top-2">
+                    <div className="flex justify-between items-center mb-2">
+                      <label className="font-medium text-xs lg:text-sm text-gray-300">
+                          Ajustar Logo
+                      </label>
+                      <button 
+                        onClick={handleDeleteLogo}
+                        className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded hover:bg-red-500/40 transition-colors border border-red-500/30"
+                      >
+                    Eliminar logo
+                      </button>
+                    </div>
+
                     <div className="flex justify-between items-center gap-1 lg:gap-2">
-                        <button onClick={() => resizeLogo(0.9)} className="control-btn" title="Achicar"> − </button>
+                        <button onClick={() => resizeLogo(0.9)} className={BTN_STYLE} title="Achicar"> − </button>
                         <div className="grid grid-cols-3 gap-1">
                             <div></div>
-                            <button onClick={() => moveLogo(0, -10)} className="control-btn-arrow">↑</button>
+                            <button onClick={() => moveLogo(0, -10)} className={ARROW_STYLE}>↑</button>
                             <div></div>
-                            <button onClick={() => moveLogo(-10, 0)} className="control-btn-arrow">←</button>
+                            <button onClick={() => moveLogo(-10, 0)} className={ARROW_STYLE}>←</button>
                             <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9] text-xs">Mov</div>
-                            <button onClick={() => moveLogo(10, 0)} className="control-btn-arrow">→</button>
+                            <button onClick={() => moveLogo(10, 0)} className={ARROW_STYLE}>→</button>
                             <div></div>
-                            <button onClick={() => moveLogo(0, 10)} className="control-btn-arrow">↓</button>
+                            <button onClick={() => moveLogo(0, 10)} className={ARROW_STYLE}>↓</button>
                             <div></div>
                         </div>
-                        <button onClick={() => resizeLogo(1.1)} className="control-btn" title="Agrandar"> + </button>
+                        <button onClick={() => resizeLogo(1.1)} className={BTN_STYLE} title="Agrandar"> + </button>
+                    </div>
+                    
+                    {/* ALERTA POSITIVA: Confirmación de carga en ESTE lado */}
+                    <div className="mt-3 bg-green-500/10 border border-green-500/20 p-2 rounded text-center">
+                        <p className="text-xs text-green-200 font-medium">
+                            ✓ Ya cargaste un logo en el {ladoSeleccionado}.
+                        </p>
                     </div>
                 </div>
             )}
 
-            {/* Mensaje si el otro lado tiene logo */}
-            {ladoSeleccionado === 'frente' && logoDorsoSrc && (
-                <p className="mt-3 text-xs text-green-300/80 text-center">
-                    ✓ Ya cargaste un logo en el dorso.
+            {/* ALERTA: Mensaje si el OTRO lado tiene logo pero este no */}
+            {ladoSeleccionado === 'frente' && !logoFrenteSrc && logoDorsoSrc && (
+                <p className="mt-3 text-xs text-green-300/80 text-center bg-green-900/20 p-2 rounded border border-green-900/30">
+                    ✓ Ya tenés un logo atrás. Podés sumar uno acá si querés.
                 </p>
             )}
-             {ladoSeleccionado === 'dorso' && logoFrenteSrc && (
-                <p className="mt-3 text-xs text-green-300/80 text-center">
-                    ✓ Ya cargaste un logo en el frente.
+             {ladoSeleccionado === 'dorso' && !logoDorsoSrc && logoFrenteSrc && (
+                <p className="mt-3 text-xs text-green-300/80 text-center bg-green-900/20 p-2 rounded border border-green-900/30">
+                    ✓ Ya tenés un logo adelante. Podés sumar uno acá si querés.
                 </p>
             )}
         </div>
@@ -433,7 +467,6 @@ export default function SimuladorCanvas() {
         {/* Botón Principal */}
         <button
           onClick={handleOpenModal}
-          // Se habilita si hay al menos UN logo cargado en cualquiera de los lados
           disabled={loading || (!logoFrenteSrc && !logoDorsoSrc)}
           className={`w-full py-4 rounded-lg font-bold text-lg transition-all shadow-md 
             ${loading || (!logoFrenteSrc && !logoDorsoSrc)
@@ -445,50 +478,126 @@ export default function SimuladorCanvas() {
         </button>
       </div>
 
-      {/* --- MODAL DE DATOS DE CONTACTO --- */}
+      {/* --- MODAL DE DATOS DE CONTACTO (MEJORADO) --- */}
       {showModal && (
           <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm overflow-y-auto">
               <div className="bg-[#3a2a31] p-6 sm:p-8 rounded-t-2xl sm:rounded-xl w-full max-w-md border-t sm:border border-[#E9D7E9]/30 shadow-2xl animate-slide-up sm:animate-none">
-                  <h3 className="text-2xl font-bold text-[#E9D7E9] mb-2">¡Ya casi estamos!</h3>
-                  <p className="text-gray-300 mb-6 text-sm">Te enviaremos el presupuesto con la vista frontal y dorsal.</p>
                   
-                  <form onSubmit={submitForm} className="flex flex-col gap-4">
-                      <div>
-                          <label className="text-white text-sm font-semibold">Nombre y Apellido</label>
-                          <input required type="text" className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none" 
-                                 value={clientData.name} onChange={e => setClientData({...clientData, name: e.target.value})} placeholder="Tu nombre" />
-                      </div>
-                      <div>
-                          <label className="text-white text-sm font-semibold">WhatsApp o Email</label>
-                          <input required type="text" className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none" 
-                                 value={clientData.contact} onChange={e => setClientData({...clientData, contact: e.target.value})} placeholder="Ej: 11 1234 5678" />
-                      </div>
-                      <div>
-                          <label className="text-white text-sm font-semibold">Mensaje Adicional</label>
-                          <textarea className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none h-20 resize-none" 
-                                 value={clientData.message} onChange={e => setClientData({...clientData, message: e.target.value})} placeholder="Ej: Necesito 20 unidades..." />
-                      </div>
+                  {/* ESTADO 1: FORMULARIO NORMAL */}
+                  {submissionStatus === 'idle' && (
+                    <>
+                      <h3 className="text-2xl font-bold text-[#E9D7E9] mb-2">¡Ya casi estamos!</h3>
+                      <p className="text-gray-300 mb-6 text-sm">Te enviaremos el presupuesto con la vista frontal y dorsal.</p>
+                      
+                      <form onSubmit={submitForm} className="flex flex-col gap-4">
+                          <div>
+                              <label className="text-white text-sm font-semibold">Nombre y Apellido</label>
+                              <input 
+                                required 
+                                type="text" 
+                                disabled={loading}
+                                className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none disabled:opacity-50" 
+                                value={clientData.name} 
+                                onChange={e => setClientData({...clientData, name: e.target.value})} 
+                                placeholder="Tu nombre" 
+                              />
+                          </div>
+                          <div>
+                              <label className="text-white text-sm font-semibold">WhatsApp o Email</label>
+                              <input 
+                                required 
+                                type="text" 
+                                disabled={loading}
+                                className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none disabled:opacity-50" 
+                                value={clientData.contact} 
+                                onChange={e => setClientData({...clientData, contact: e.target.value})} 
+                                placeholder="Ej: 11 1234 5678" 
+                              />
+                          </div>
+                          <div>
+                              <label className="text-white text-sm font-semibold">Mensaje Adicional</label>
+                              <textarea 
+                                disabled={loading}
+                                className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none h-20 resize-none disabled:opacity-50" 
+                                value={clientData.message} 
+                                onChange={e => setClientData({...clientData, message: e.target.value})} 
+                                placeholder="Ej: Necesito 20 unidades..." 
+                              />
+                          </div>
 
-                      <div className="flex gap-3 mt-4 mb-4 sm:mb-0">
-                          <button type="button" onClick={() => setShowModal(false)} className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10">Cancelar</button>
-                          <button type="submit" disabled={loading} className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">
-                              {loading ? "Creando diseño..." : "Enviar Diseño"}
-                          </button>
+                          <div className="flex gap-3 mt-4 mb-4 sm:mb-0">
+                              <button 
+                                type="button" 
+                                onClick={() => setShowModal(false)} 
+                                disabled={loading}
+                                className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10 disabled:opacity-50"
+                              >
+                                Cancelar
+                              </button>
+                              
+                              <button 
+                                type="submit" 
+                                disabled={loading} 
+                                className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors disabled:opacity-80 flex items-center justify-center gap-2"
+                              >
+                                  {loading ? (
+                                    <>
+                                      {/* Spinner simple con CSS */}
+                                      <span className="w-4 h-4 border-2 border-[#3a2a31] border-t-transparent rounded-full animate-spin"></span>
+                                      Enviando...
+                                    </>
+                                  ) : "Enviar Diseño"}
+                              </button>
+                          </div>
+                      </form>
+                    </>
+                  )}
+
+                  {/* ESTADO 2: ÉXITO */}
+                  {submissionStatus === 'success' && (
+                    <div className="flex flex-col items-center text-center py-4">
+                      <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center text-3xl mb-4 border border-green-500/50">
+                        ✓
                       </div>
-                  </form>
+                      <h3 className="text-2xl font-bold text-white mb-2">¡Diseño enviado!</h3>
+                      <p className="text-gray-300 mb-6">Hemos recibido tu diseño correctamente. Te contactaremos a la brevedad con el presupuesto.</p>
+                      <button 
+                        onClick={() => setShowModal(false)} 
+                        className="w-full py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors"
+                      >
+                        Cerrar
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ESTADO 3: ERROR */}
+                  {submissionStatus === 'error' && (
+                    <div className="flex flex-col items-center text-center py-4">
+                      <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center text-3xl mb-4 border border-red-500/50">
+                        !
+                      </div>
+                      <h3 className="text-2xl font-bold text-white mb-2">Hubo un problema</h3>
+                      <p className="text-gray-300 mb-6">No pudimos enviar tu diseño. Por favor, verifica tu conexión e inténtalo nuevamente.</p>
+                      <div className="flex gap-3 w-full">
+                        <button 
+                          onClick={() => setShowModal(false)} 
+                          className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10"
+                        >
+                          Cerrar
+                        </button>
+                        <button 
+                          onClick={() => setSubmissionStatus('idle')} 
+                          className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors"
+                        >
+                          Reintentar
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
               </div>
           </div>
       )}
-
-      {/* Estilos utilitarios */}
-      <style jsx>{`
-        .control-btn {
-          @apply bg-[#745968] hover:bg-[#8a6b7d] w-12 h-12 rounded-lg transition-colors font-bold text-xl flex items-center justify-center pb-1 shadow-sm active:scale-95 touch-manipulation;
-        }
-        .control-btn-arrow {
-             @apply bg-[#745968] hover:bg-[#8a6b7d] w-10 h-10 lg:w-8 lg:h-8 rounded transition-colors font-bold flex items-center justify-center shadow-sm active:scale-95 touch-manipulation;
-        }
-      `}</style>
     </div>
   );
 }
