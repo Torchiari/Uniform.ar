@@ -23,7 +23,9 @@ export class DesignsController {
             image: body.image,
             clientName: body.clientName,
             clientContact: body.clientContact,
-            clientMessage: body.clientMessage
+            clientMessage: body.clientMessage,
+            logoFrente: body.logoFrente,
+            logoDorso: body.logoDorso
         });
         return res.status(HttpStatus.OK).json(result);
     } catch (error) {
