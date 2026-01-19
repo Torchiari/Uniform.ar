@@ -2,14 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
-// --- URL DE LA API ---
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
-// --- ESTILOS EN VARIABLES ---
 const BTN_STYLE = "bg-[#745968] hover:bg-[#8a6b7d] w-12 h-12 rounded-lg transition-colors font-bold text-xl flex items-center justify-center pb-1 shadow-sm active:scale-95 touch-manipulation text-white cursor-pointer border-none";
 const ARROW_STYLE = "bg-[#745968] hover:bg-[#8a6b7d] w-10 h-10 lg:w-8 lg:h-8 rounded transition-colors font-bold flex items-center justify-center shadow-sm active:scale-95 touch-manipulation text-white cursor-pointer border-none";
 
-// --- ESTRUCTURA DE DATOS ---
 const COLORES = [
   { nombre: "Blanco", hex: "#FFFFFF", id: "blanco" },
   { nombre: "Negro", hex: "#000000", id: "negro" },
@@ -30,7 +27,6 @@ const TIPOS_PRENDA = [
   { id: "bombacha_campo", nombre: "Bombacha de Campo" },
 ];
 
-// Interface para el item guardado en el carrito
 interface DesignItem {
   id: number;
   tipo: string;
@@ -40,41 +36,32 @@ interface DesignItem {
   logoDorsoOriginal?: string | null;
 }
 
-// Función para obtener la ruta
 const getPrendaSrc = (tipoId: string, colorId: string, lado: 'frente' | 'dorso') => {
   return `/img/mockups/${tipoId}_${colorId}_${lado}.png`;
 };
 
-// --- COMPONENTE PRINCIPAL ---
 export default function SimuladorCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // --- ESTADO: CARRITO ---
   const [cart, setCart] = useState<DesignItem[]>([]);
 
-  // Estados generales
   const [tipoSeleccionado, setTipoSeleccionado] = useState(TIPOS_PRENDA[0].id);
   const [colorSeleccionado, setColorSeleccionado] = useState(COLORES[0].id);
   const [ladoSeleccionado, setLadoSeleccionado] = useState<'frente' | 'dorso'>('frente');
 
-  // ESTADOS DEL LOGO (Separados por lado)
   const [logoFrenteSrc, setLogoFrenteSrc] = useState<string | null>(null);
   const [configFrente, setConfigFrente] = useState({ x: 180, y: 150, width: 0, height: 0 });
 
   const [logoDorsoSrc, setLogoDorsoSrc] = useState<string | null>(null);
   const [configDorso, setConfigDorso] = useState({ x: 180, y: 150, width: 0, height: 0 });
 
-  // UI Generales
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [clientData, setClientData] = useState({ name: "", contact: "", message: "" });
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
 
-  // --- NUEVO: ESTADO PARA ALERTAS PERSONALIZADAS ---
-  // controlamos qué alerta mostrar: 'none', 'confirm_blank' (prenda sin logo), 'success_added' (agregado ok)
   const [customAlert, setCustomAlert] = useState<'none' | 'confirm_blank' | 'success_added'>('none');
 
-  // --- LÓGICA DE DIBUJO EN PANTALLA ---
   const draw = () => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -112,7 +99,6 @@ export default function SimuladorCanvas() {
     draw();
   }, [tipoSeleccionado, colorSeleccionado, ladoSeleccionado, logoFrenteSrc, configFrente, logoDorsoSrc, configDorso]);
 
-  // --- MANEJO DE ARCHIVOS ---
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -166,7 +152,6 @@ export default function SimuladorCanvas() {
   const moveLogo = (dx: number, dy: number) => updateCurrentConfig(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
   const resizeLogo = (factor: number) => updateCurrentConfig(prev => ({ ...prev, width: Math.max(20, prev.width * factor), height: Math.max(20, prev.height * factor) }));
 
-  // --- GENERACIÓN DE IMAGEN COMBINADA ---
   const generarImagenCombinada = async (): Promise<string> => {
     const canvasTemp = document.createElement('canvas');
     canvasTemp.width = 1000;
@@ -209,9 +194,7 @@ export default function SimuladorCanvas() {
     return canvasTemp.toDataURL("image/png");
   };
 
-  // --- FUNCIÓN PRINCIPAL DE GUARDADO (REAL) ---
   const ejecutarGuardado = async () => {
-    // Cerramos cualquier alerta previa
     setCustomAlert('none');
     setLoading(true);
 
@@ -228,15 +211,9 @@ export default function SimuladorCanvas() {
       };
 
       setCart([...cart, nuevoItem]);
-
-      // Limpiamos los logos
       setLogoFrenteSrc(null);
       setLogoDorsoSrc(null);
-
-      // Mostramos alerta de éxito personalizada
       setCustomAlert('success_added');
-
-      // La alerta de éxito se cierra sola después de 2.5 seg (opcional, o por botón)
       setTimeout(() => setCustomAlert('none'), 2500);
 
     } catch (e) {
@@ -246,18 +223,14 @@ export default function SimuladorCanvas() {
     }
   };
 
-  // --- MANEJADOR DEL BOTÓN AGREGAR ---
   const handleAgregarClick = () => {
-    // Si no hay logos, mostramos el modal de confirmación en lugar del window.confirm
     if (!logoFrenteSrc && !logoDorsoSrc) {
       setCustomAlert('confirm_blank');
       return;
     }
-    // Si hay logos, guardamos directo
     ejecutarGuardado();
   };
 
-  // --- ELIMINAR DEL CARRITO ---
   const eliminarDelCarrito = (id: number) => {
     setCart(cart.filter(item => item.id !== id));
   };
@@ -267,7 +240,6 @@ export default function SimuladorCanvas() {
     setShowModal(true);
   };
 
-  // --- ENVÍO MASIVO ---
   const submitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -289,7 +261,6 @@ export default function SimuladorCanvas() {
       });
 
       await Promise.all(listaDeEnvios);
-
       setSubmissionStatus('success');
       setClientData({ name: "", contact: "", message: "" });
       setCart([]);
@@ -303,11 +274,9 @@ export default function SimuladorCanvas() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start justify-center mt-24 mb-10 lg:my-10 relative px-4 lg:px-0">
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start justify-center mt-2 mb-10 lg:my-10 relative px-0 lg:px-0 w-full">
 
-      {/* Área del Canvas */}
-      <div className="flex flex-col gap-2 sticky top-24 lg:top-10 z-10 w-full max-w-[500px]">
-        {/* Pestañas */}
+      <div className="flex flex-col gap-2 sticky top-2 lg:top-10 z-20 w-full max-w-[500px]">
         <div className="flex bg-[#3a2a31] rounded-t-lg overflow-hidden border border-[#745968]">
           <button
             onClick={() => setLadoSeleccionado('frente')}
@@ -330,7 +299,6 @@ export default function SimuladorCanvas() {
           Estás editando la vista: <strong className="uppercase">{ladoSeleccionado}</strong>
         </p>
 
-        {/* --- LISTA DE PRENDAS GUARDADAS --- */}
         {cart.length > 0 && (
           <div className="mt-4 bg-[#3a2a31] p-4 rounded-xl border border-[#745968] animate-in slide-in-from-bottom-5">
             <h4 className="text-[#E9D7E9] font-bold mb-3 border-b border-[#745968] pb-2 flex justify-between">
@@ -359,13 +327,11 @@ export default function SimuladorCanvas() {
         )}
       </div>
 
-      {/* Controles */}
-      <div className="flex flex-col gap-6 w-full max-w-[500px] lg:max-w-md bg-[#3a2a31] p-6 lg:p-8 rounded-xl text-[#F5EEF7] shadow-2xl z-0">
+      <div className="flex flex-col gap-6 w-full max-w-[500px] lg:max-w-md bg-[#3a2a31] p-6 lg:p-8 rounded-xl text-[#F5EEF7] shadow-2xl z-10">
         <h3 className="text-2xl lg:text-3xl font-bold text-[#E9D7E9] mb-2 lg:mb-4 text-center lg:text-left">
           Personalizá tu Uniforme
         </h3>
 
-        {/* 1. Selección de Tipo de Prenda */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
           <label className="block mb-3 font-medium text-base lg:text-lg">1. ¿Qué prenda buscás?</label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-[#4a3840] p-2 rounded-lg">
@@ -381,7 +347,6 @@ export default function SimuladorCanvas() {
           </div>
         </div>
 
-        {/* 2. Selección de Color */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
           <label className="block mb-3 font-medium text-base lg:text-lg">2. Elegí el color</label>
           <div className="flex flex-wrap gap-3 justify-center md:justify-start">
@@ -404,7 +369,6 @@ export default function SimuladorCanvas() {
           </p>
         </div>
 
-        {/* 3. Subida de Logo */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50 transition-all duration-300">
           <div className="flex justify-between items-center mb-1">
             <label className="block font-medium text-base lg:text-lg">
@@ -462,19 +426,15 @@ export default function SimuladorCanvas() {
 
         <hr className="border-[#745968] my-2" />
 
-        {/* --- BOTONES DE ACCIÓN --- */}
         <div className="flex flex-col gap-3">
-          {/* Botón Guardar en Carrito (Ahora llama a handleAgregarClick) */}
           <button
             onClick={handleAgregarClick}
             disabled={loading}
             className="w-full py-3 rounded-lg font-bold text-lg bg-[#745968] text-white hover:bg-[#8a6b7d] transition-all border border-[#E9D7E9]/30 shadow-sm hover:shadow-md flex items-center justify-center gap-2"
           >
-            {/* <span>➕</span> */}
             Agregar al pedido y seguir diseñando
           </button>
 
-          {/* Botón Finalizar */}
           <button
             onClick={handleOpenModal}
             disabled={loading || cart.length === 0}
@@ -485,11 +445,8 @@ export default function SimuladorCanvas() {
         </div>
       </div>
 
-      {/* --- ALERTAS PERSONALIZADAS (NUEVO) --- */}
       {customAlert !== 'none' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm animate-in fade-in duration-200">
-
-          {/* 1. CONFIRMACIÓN PRENDA LISA */}
           {customAlert === 'confirm_blank' && (
             <div className="bg-[#3a2a31] p-6 rounded-xl w-full max-w-sm border border-[#E9D7E9]/50 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
               <div className="flex flex-col items-center text-center">
@@ -511,7 +468,6 @@ export default function SimuladorCanvas() {
             </div>
           )}
 
-          {/* 2. ÉXITO AL AGREGAR */}
           {customAlert === 'success_added' && (
             <div className="bg-[#3a2a31] p-6 rounded-xl w-full max-w-xs border border-green-500/50 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
               <div className="flex flex-col items-center text-center">
@@ -529,7 +485,6 @@ export default function SimuladorCanvas() {
         </div>
       )}
 
-      {/* --- MODAL FORMULARIO DE ENVÍO --- */}
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm overflow-y-auto">
           <div className="bg-[#3a2a31] p-6 sm:p-8 rounded-t-2xl sm:rounded-xl w-full max-w-md border-t sm:border border-[#E9D7E9]/30 shadow-2xl animate-slide-up sm:animate-none">
