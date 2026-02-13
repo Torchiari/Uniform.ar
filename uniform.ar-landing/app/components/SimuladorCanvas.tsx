@@ -27,13 +27,22 @@ const TIPOS_PRENDA = [
   { id: "bombacha_campo", nombre: "Bombacha de Campo" },
 ];
 
+interface LogoObj {
+  id: number;
+  src: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface DesignItem {
   id: number;
   tipo: string;
   color: string;
   image: string;
-  logoFrenteOriginal?: string | null;
-  logoDorsoOriginal?: string | null;
+  logosFrenteOriginales: string[]; 
+  logosDorsoOriginales: string[];
 }
 
 const getPrendaSrc = (tipoId: string, colorId: string, lado: 'frente' | 'dorso') => {
@@ -49,18 +58,19 @@ export default function SimuladorCanvas() {
   const [colorSeleccionado, setColorSeleccionado] = useState(COLORES[0].id);
   const [ladoSeleccionado, setLadoSeleccionado] = useState<'frente' | 'dorso'>('frente');
 
-  const [logoFrenteSrc, setLogoFrenteSrc] = useState<string | null>(null);
-  const [configFrente, setConfigFrente] = useState({ x: 180, y: 150, width: 0, height: 0 });
-
-  const [logoDorsoSrc, setLogoDorsoSrc] = useState<string | null>(null);
-  const [configDorso, setConfigDorso] = useState({ x: 180, y: 150, width: 0, height: 0 });
+  const [logosFrente, setLogosFrente] = useState<LogoObj[]>([]);
+  const [logosDorso, setLogosDorso] = useState<LogoObj[]>([]);
+  
+  const [activeLogoId, setActiveLogoId] = useState<number | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [clientData, setClientData] = useState({ name: "", contact: "", message: "" });
   const [submissionStatus, setSubmissionStatus] = useState<'idle' | 'success' | 'error'>('idle');
-
   const [customAlert, setCustomAlert] = useState<'none' | 'confirm_blank' | 'success_added'>('none');
+
+  const currentLogos = ladoSeleccionado === 'frente' ? logosFrente : logosDorso;
+  const setLogos = ladoSeleccionado === 'frente' ? setLogosFrente : setLogosDorso;
 
   const draw = () => {
     const canvas = canvasRef.current;
@@ -71,8 +81,8 @@ export default function SimuladorCanvas() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const bgSrc = getPrendaSrc(tipoSeleccionado, colorSeleccionado, ladoSeleccionado);
-    const currentLogoSrc = ladoSeleccionado === 'frente' ? logoFrenteSrc : logoDorsoSrc;
-    const currentConfig = ladoSeleccionado === 'frente' ? configFrente : configDorso;
+    
+    const logosToDraw = ladoSeleccionado === 'frente' ? logosFrente : logosDorso;
 
     const baseImg = new Image();
     baseImg.src = bgSrc;
@@ -80,13 +90,17 @@ export default function SimuladorCanvas() {
     baseImg.onload = () => {
       ctx.drawImage(baseImg, 0, 0, 500, 500);
 
-      if (currentLogoSrc) {
+      logosToDraw.forEach(logo => {
         const logoImg = new Image();
-        logoImg.src = currentLogoSrc;
-        logoImg.onload = () => {
-          ctx.drawImage(logoImg, currentConfig.x, currentConfig.y, currentConfig.width, currentConfig.height);
-        };
-      }
+        logoImg.src = logo.src;
+        ctx.drawImage(logoImg, logo.x, logo.y, logo.width, logo.height);
+        
+        if (logo.id === activeLogoId && ladoSeleccionado === (ladoSeleccionado)) {
+           ctx.strokeStyle = "#745968";
+           ctx.lineWidth = 1;
+           ctx.strokeRect(logo.x - 2, logo.y - 2, logo.width + 4, logo.height + 4);
+        }
+      });
     };
 
     baseImg.onerror = () => {
@@ -97,7 +111,7 @@ export default function SimuladorCanvas() {
 
   useEffect(() => {
     draw();
-  }, [tipoSeleccionado, colorSeleccionado, ladoSeleccionado, logoFrenteSrc, configFrente, logoDorsoSrc, configDorso]);
+  }, [tipoSeleccionado, colorSeleccionado, ladoSeleccionado, logosFrente, logosDorso, activeLogoId]);
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -122,16 +136,22 @@ export default function SimuladorCanvas() {
             newWidth = maxInitialSize * ratio;
           }
         }
-        const initialX = (500 - newWidth) / 2;
-        const initialY = 200;
+        
+        const offset = currentLogos.length * 20; 
+        const initialX = (500 - newWidth) / 2 + offset;
+        const initialY = 200 + offset;
+        
+        const newLogo: LogoObj = {
+            id: Date.now(),
+            src: src,
+            x: initialX,
+            y: initialY,
+            width: newWidth,
+            height: newHeight
+        };
 
-        if (ladoSeleccionado === 'frente') {
-          setConfigFrente({ x: initialX, y: initialY, width: newWidth, height: newHeight });
-          setLogoFrenteSrc(src);
-        } else {
-          setConfigDorso({ x: initialX, y: initialY, width: newWidth, height: newHeight });
-          setLogoDorsoSrc(src);
-        }
+        setLogos([...currentLogos, newLogo]);
+        setActiveLogoId(newLogo.id);
       };
       img.src = src;
     };
@@ -139,19 +159,27 @@ export default function SimuladorCanvas() {
     e.target.value = '';
   };
 
-  const handleDeleteLogo = () => {
-    if (ladoSeleccionado === 'frente') setLogoFrenteSrc(null);
-    else setLogoDorsoSrc(null);
+  const handleDeleteActiveLogo = () => {
+    if (!activeLogoId) return;
+    setLogos(currentLogos.filter(l => l.id !== activeLogoId));
+    setActiveLogoId(null);
   };
 
-  const updateCurrentConfig = (callback: (prev: any) => any) => {
-    if (ladoSeleccionado === 'frente') setConfigFrente(callback);
-    else setConfigDorso(callback);
+  const updateActiveLogo = (callback: (prev: LogoObj) => LogoObj) => {
+    if (!activeLogoId) return;
+    
+    setLogos(currentLogos.map(logo => {
+        if (logo.id === activeLogoId) {
+            return callback(logo);
+        }
+        return logo;
+    }));
   };
 
-  const moveLogo = (dx: number, dy: number) => updateCurrentConfig(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
-  const resizeLogo = (factor: number) => updateCurrentConfig(prev => ({ ...prev, width: Math.max(20, prev.width * factor), height: Math.max(20, prev.height * factor) }));
+  const moveLogo = (dx: number, dy: number) => updateActiveLogo(prev => ({ ...prev, x: prev.x + dx, y: prev.y + dy }));
+  const resizeLogo = (factor: number) => updateActiveLogo(prev => ({ ...prev, width: Math.max(20, prev.width * factor), height: Math.max(20, prev.height * factor) }));
 
+  // --- LÓGICA DE GUARDADO ---
   const generarImagenCombinada = async (): Promise<string> => {
     const canvasTemp = document.createElement('canvas');
     canvasTemp.width = 1000;
@@ -162,33 +190,39 @@ export default function SimuladorCanvas() {
     const dibujarLado = (lado: 'frente' | 'dorso', offsetX: number): Promise<void> => {
       return new Promise((resolve) => {
         const bgSrc = getPrendaSrc(tipoSeleccionado, colorSeleccionado, lado);
-        const logoSrc = lado === 'frente' ? logoFrenteSrc : logoDorsoSrc;
-        const config = lado === 'frente' ? configFrente : configDorso;
+        const logos = lado === 'frente' ? logosFrente : logosDorso;
 
         const imgBase = new Image();
         imgBase.crossOrigin = "anonymous";
         imgBase.src = bgSrc;
 
-        imgBase.onload = () => {
+        imgBase.onload = async () => {
           ctx.drawImage(imgBase, offsetX, 0, 500, 500);
-          if (logoSrc) {
-            const imgLogo = new Image();
-            imgLogo.crossOrigin = "anonymous";
-            imgLogo.src = logoSrc;
-            imgLogo.onload = () => {
-              ctx.drawImage(imgLogo, offsetX + config.x, config.y, config.width, config.height);
-              resolve();
-            };
-            imgLogo.onerror = () => resolve();
-          } else { resolve(); }
+          
+          const logoPromises = logos.map(logo => {
+              return new Promise<void>((resolveLogo) => {
+                  const imgLogo = new Image();
+                  imgLogo.crossOrigin = "anonymous";
+                  imgLogo.src = logo.src;
+                  imgLogo.onload = () => {
+                      ctx.drawImage(imgLogo, offsetX + logo.x, logo.y, logo.width, logo.height);
+                      resolveLogo();
+                  };
+                  imgLogo.onerror = () => resolveLogo();
+              });
+          });
+
+          await Promise.all(logoPromises);
 
           ctx.fillStyle = "#999";
           ctx.font = "bold 20px Arial";
           ctx.fillText(lado.toUpperCase(), offsetX + 20, 480);
+          resolve();
         };
         imgBase.onerror = () => resolve();
       });
     };
+    
     await dibujarLado('frente', 0);
     await dibujarLado('dorso', 500);
     return canvasTemp.toDataURL("image/png");
@@ -206,13 +240,15 @@ export default function SimuladorCanvas() {
         tipo: TIPOS_PRENDA.find(t => t.id === tipoSeleccionado)?.nombre || tipoSeleccionado,
         color: COLORES.find(c => c.id === colorSeleccionado)?.nombre || colorSeleccionado,
         image: imagenGenerada,
-        logoFrenteOriginal: logoFrenteSrc,
-        logoDorsoOriginal: logoDorsoSrc
+        logosFrenteOriginales: logosFrente.map(l => l.src),
+        logosDorsoOriginales: logosDorso.map(l => l.src)
       };
 
       setCart([...cart, nuevoItem]);
-      setLogoFrenteSrc(null);
-      setLogoDorsoSrc(null);
+      setLogosFrente([]);
+      setLogosDorso([]);
+      setActiveLogoId(null);
+      
       setCustomAlert('success_added');
       setTimeout(() => setCustomAlert('none'), 2500);
 
@@ -224,7 +260,7 @@ export default function SimuladorCanvas() {
   };
 
   const handleAgregarClick = () => {
-    if (!logoFrenteSrc && !logoDorsoSrc) {
+    if (logosFrente.length === 0 && logosDorso.length === 0) {
       setCustomAlert('confirm_blank');
       return;
     }
@@ -254,8 +290,8 @@ export default function SimuladorCanvas() {
             clientName: clientData.name,
             clientContact: clientData.contact,
             clientMessage: `${clientData.message}\n\n--- PRENDA ${index + 1} DE ${cart.length} ---\nTipo: ${item.tipo}\nColor: ${item.color}`,
-            logoFrente: item.logoFrenteOriginal,
-            logoDorso: item.logoDorsoOriginal
+            logosFrente: item.logosFrenteOriginales,
+            logosDorso: item.logosDorsoOriginales
           }),
         });
       });
@@ -277,28 +313,36 @@ export default function SimuladorCanvas() {
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-center lg:items-start justify-center mt-2 mb-10 lg:my-10 relative px-0 lg:px-0 w-full">
 
       <div className="flex flex-col gap-2 sticky top-2 lg:top-10 z-20 w-full max-w-[500px]">
+        {/* BOTONES VISTA FRENTE / DORSO */}
         <div className="flex bg-[#3a2a31] rounded-t-lg overflow-hidden border border-[#745968]">
           <button
-            onClick={() => setLadoSeleccionado('frente')}
+            onClick={() => { setLadoSeleccionado('frente'); setActiveLogoId(null); }}
             className={`flex-1 py-3 text-sm font-bold transition-colors ${ladoSeleccionado === 'frente' ? 'bg-[#E9D7E9] text-[#3a2a31]' : 'text-[#F5EEF7] hover:bg-white/10'}`}
           >
-            VISTA FRENTE
+            VISTA FRENTE {logosFrente.length > 0 && `(${logosFrente.length})`}
           </button>
           <button
-            onClick={() => setLadoSeleccionado('dorso')}
+            onClick={() => { setLadoSeleccionado('dorso'); setActiveLogoId(null); }}
             className={`flex-1 py-3 text-sm font-bold transition-colors ${ladoSeleccionado === 'dorso' ? 'bg-[#E9D7E9] text-[#3a2a31]' : 'text-[#F5EEF7] hover:bg-white/10'}`}
           >
-            VISTA DORSO
+            VISTA DORSO {logosDorso.length > 0 && `(${logosDorso.length})`}
           </button>
         </div>
 
-        <div className="bg-white p-2 md:p-4 shadow-xl rounded-b-xl border border-gray-200">
+        <div className="bg-white p-2 md:p-4 shadow-xl rounded-b-xl border border-gray-200 relative group">
           <canvas ref={canvasRef} width={500} height={500} className="border bg-gray-50 rounded-lg w-full h-auto block" />
+          
+          <div className="absolute top-4 left-4 pointer-events-none opacity-50 text-xs text-gray-400">
+             {currentLogos.length > 0 ? "Usá los controles para mover el logo seleccionado" : ""}
+          </div>
         </div>
+        
         <p className="text-center text-xs text-gray-500">
-          Estás editando la vista: <strong className="uppercase">{ladoSeleccionado}</strong>
+          Estás editando: <strong className="uppercase">{ladoSeleccionado}</strong>. 
+          {currentLogos.length > 0 ? " Seleccioná un logo abajo para moverlo." : ""}
         </p>
 
+        {/* CARRITO VISUAL */}
         {cart.length > 0 && (
           <div className="mt-4 bg-[#3a2a31] p-4 rounded-xl border border-[#745968] animate-in slide-in-from-bottom-5">
             <h4 className="text-[#E9D7E9] font-bold mb-3 border-b border-[#745968] pb-2 flex justify-between">
@@ -313,13 +357,7 @@ export default function SimuladorCanvas() {
                     <p className="font-bold text-[#E9D7E9] truncate">#{idx + 1} {item.tipo}</p>
                     <p className="text-xs text-gray-300">{item.color}</p>
                   </div>
-                  <button
-                    onClick={() => eliminarDelCarrito(item.id)}
-                    className="text-red-300 hover:text-red-100 hover:bg-red-900/50 p-2 rounded transition-colors"
-                    title="Eliminar este diseño"
-                  >
-                    ✕
-                  </button>
+                  <button onClick={() => eliminarDelCarrito(item.id)} className="text-red-300 hover:text-red-100 hover:bg-red-900/50 p-2 rounded transition-colors">✕</button>
                 </div>
               ))}
             </div>
@@ -332,6 +370,7 @@ export default function SimuladorCanvas() {
           Personalizá tu Uniforme
         </h3>
 
+        {/* 1. SELECCIÓN DE PRENDA */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
           <label className="block mb-3 font-medium text-base lg:text-lg">1. ¿Qué prenda buscás?</label>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-[#4a3840] p-2 rounded-lg">
@@ -347,6 +386,7 @@ export default function SimuladorCanvas() {
           </div>
         </div>
 
+        {/* 2. SELECCIÓN DE COLOR */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50">
           <label className="block mb-3 font-medium text-base lg:text-lg">2. Elegí el color</label>
           <div className="flex flex-wrap gap-3 justify-center md:justify-start">
@@ -369,58 +409,72 @@ export default function SimuladorCanvas() {
           </p>
         </div>
 
+        {/* 3. LOGOS */}
         <div className="bg-[#4a3840]/50 p-3 lg:p-4 rounded-lg border border-[#745968]/50 transition-all duration-300">
           <div className="flex justify-between items-center mb-1">
             <label className="block font-medium text-base lg:text-lg">
-              3. Logo para el <span className="text-[#E9D7E9] uppercase font-bold">{ladoSeleccionado}</span>
+              3. Logos en <span className="text-[#E9D7E9] uppercase font-bold">{ladoSeleccionado}</span>
             </label>
-            <span className="text-xs bg-[#E9D7E9]/20 px-2 py-1 rounded text-[#E9D7E9]">
-              {ladoSeleccionado === 'frente' ? 'Opcional' : 'Opcional'}
-            </span>
+            <span className="text-xs bg-[#E9D7E9]/20 px-2 py-1 rounded text-[#E9D7E9]">Opcional</span>
           </div>
 
-          {!((ladoSeleccionado === 'frente' && logoFrenteSrc) || (ladoSeleccionado === 'dorso' && logoDorsoSrc)) && (
-            <>
-              <p className="text-xs text-[#E9D7E9]/70 mb-3">Formato <strong>.PNG sin fondo</strong> recomendado.</p>
-              <input type="file" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} key={ladoSeleccionado} className="w-full text-xs lg:text-sm text-gray-300 file:mr-2 lg:file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-[#745968] file:text-white hover:file:bg-[#8a6b7d] cursor-pointer" />
+          <p className="text-xs text-[#E9D7E9]/70 mb-3">Formato <strong>.PNG sin fondo</strong> recomendado.</p>
+          
+          <div className="flex gap-2 items-center mb-4">
+             <label className="flex-1 cursor-pointer bg-[#745968] hover:bg-[#8a6b7d] text-white py-2 px-4 rounded-lg text-sm text-center transition-colors border border-[#E9D7E9]/30">
+                + Agregar Logo
+                <input type="file" accept="image/png, image/jpeg, image/svg+xml" onChange={handleLogoUpload} className="hidden" />
+             </label>
+             <span className="text-xs text-gray-400">{currentLogos.length} logos cargados</span>
+          </div>
 
-              {!logoFrenteSrc && !logoDorsoSrc && (
-                <div className="mt-3 bg-blue-500/10 border border-blue-500/20 p-2 rounded flex gap-2 items-start">
-                  <span className="text-blue-300">ℹ️</span>
-                  <p className="text-xs text-blue-100/90 leading-tight">Todavía no hay logos. Podés cargar un logo en el <strong>frente</strong> o en el <strong>dorso</strong>.</p>
-                </div>
-              )}
-            </>
+          {currentLogos.length === 0 && (
+             <div className="mt-3 bg-blue-500/10 border border-blue-500/20 p-2 rounded flex gap-2 items-start">
+               <span className="text-blue-300">ℹ️</span>
+               <p className="text-xs text-blue-100/90 leading-tight">No hay logos en el {ladoSeleccionado}. Cargá uno si querés.</p>
+             </div>
           )}
 
-          {((ladoSeleccionado === 'frente' && logoFrenteSrc) || (ladoSeleccionado === 'dorso' && logoDorsoSrc)) && (
+          {/* LISTA DE LOGOS CARGADOS Y CONTROLES */}
+          {currentLogos.length > 0 && (
             <div className="mt-2 bg-[#4a3840] p-2 lg:p-3 rounded-lg animate-in fade-in slide-in-from-top-2">
-              <div className="flex justify-between items-center mb-2">
-                <label className="font-medium text-xs lg:text-sm text-gray-300">Ajustar Logo</label>
-                <button onClick={handleDeleteLogo} className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded hover:bg-red-500/40 transition-colors border border-red-500/30">Eliminar logo</button>
+              
+              <div className="flex gap-2 overflow-x-auto pb-2 mb-2">
+                 {currentLogos.map((logo, index) => (
+                    <button 
+                        key={logo.id}
+                        onClick={() => setActiveLogoId(logo.id)}
+                        className={`w-10 h-10 rounded border overflow-hidden flex-shrink-0 relative ${activeLogoId === logo.id ? 'border-[#E9D7E9] ring-2 ring-[#E9D7E9]/50' : 'border-gray-500 opacity-60'}`}
+                    >
+                        <img src={logo.src} className="w-full h-full object-contain bg-white" alt="logo thumb" />
+                        <span className="absolute bottom-0 right-0 bg-black/70 text-white text-[8px] px-1">{index+1}</span>
+                    </button>
+                 ))}
               </div>
-              <div className="flex justify-between items-center gap-1 lg:gap-2">
-                <button onClick={() => resizeLogo(0.9)} className={BTN_STYLE} title="Achicar"> − </button>
-                <div className="grid grid-cols-3 gap-1">
-                  <div></div><button onClick={() => moveLogo(0, -10)} className={ARROW_STYLE}>↑</button><div></div>
-                  <button onClick={() => moveLogo(-10, 0)} className={ARROW_STYLE}>←</button>
-                  <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9] text-xs">Mov</div>
-                  <button onClick={() => moveLogo(10, 0)} className={ARROW_STYLE}>→</button>
-                  <div></div><button onClick={() => moveLogo(0, 10)} className={ARROW_STYLE}>↓</button><div></div>
-                </div>
-                <button onClick={() => resizeLogo(1.1)} className={BTN_STYLE} title="Agrandar"> + </button>
-              </div>
-              <div className="mt-3 bg-green-500/10 border border-green-500/20 p-2 rounded text-center">
-                <p className="text-xs text-green-200 font-medium">✓ Ya cargaste un logo en el {ladoSeleccionado}.</p>
-              </div>
-            </div>
-          )}
 
-          {ladoSeleccionado === 'frente' && !logoFrenteSrc && logoDorsoSrc && (
-            <p className="mt-3 text-xs text-green-300/80 text-center bg-green-900/20 p-2 rounded border border-green-900/30">✓ Ya tenés un logo atrás. Podés sumar uno acá si querés.</p>
-          )}
-          {ladoSeleccionado === 'dorso' && !logoDorsoSrc && logoFrenteSrc && (
-            <p className="mt-3 text-xs text-green-300/80 text-center bg-green-900/20 p-2 rounded border border-green-900/30">✓ Ya tenés un logo adelante. Podés sumar uno acá si querés.</p>
+              {activeLogoId ? (
+                <>
+                    <div className="flex justify-between items-center mb-2 bg-[#3a2a31]/50 p-2 rounded">
+                        <label className="font-medium text-xs lg:text-sm text-gray-300">Editando Logo Seleccionado</label>
+                        <button onClick={handleDeleteActiveLogo} className="text-xs bg-red-500/20 text-red-300 px-2 py-1 rounded hover:bg-red-500/40 transition-colors border border-red-500/30">Borrar este</button>
+                    </div>
+                    
+                    <div className="flex justify-between items-center gap-1 lg:gap-2">
+                        <button onClick={() => resizeLogo(0.9)} className={BTN_STYLE} title="Achicar"> − </button>
+                        <div className="grid grid-cols-3 gap-1">
+                        <div></div><button onClick={() => moveLogo(0, -10)} className={ARROW_STYLE}>↑</button><div></div>
+                        <button onClick={() => moveLogo(-10, 0)} className={ARROW_STYLE}>←</button>
+                        <div className="w-8 h-8 flex items-center justify-center text-[#E9D7E9] text-xs">Mov</div>
+                        <button onClick={() => moveLogo(10, 0)} className={ARROW_STYLE}>→</button>
+                        <div></div><button onClick={() => moveLogo(0, 10)} className={ARROW_STYLE}>↓</button><div></div>
+                        </div>
+                        <button onClick={() => resizeLogo(1.1)} className={BTN_STYLE} title="Agrandar"> + </button>
+                    </div>
+                </>
+              ) : (
+                  <p className="text-center text-xs text-yellow-200/80 py-2">Seleccioná un logo de arriba para moverlo.</p>
+              )}
+            </div>
           )}
         </div>
 
@@ -445,24 +499,18 @@ export default function SimuladorCanvas() {
         </div>
       </div>
 
+      {/* ALERTAS Y MODALES */}
       {customAlert !== 'none' && (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[60] p-4 backdrop-blur-sm animate-in fade-in duration-200">
           {customAlert === 'confirm_blank' && (
             <div className="bg-[#3a2a31] p-6 rounded-xl w-full max-w-sm border border-[#E9D7E9]/50 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
               <div className="flex flex-col items-center text-center">
-                <div className="w-14 h-14 bg-yellow-500/20 text-yellow-300 rounded-full flex items-center justify-center text-2xl mb-4 border border-yellow-500/40">
-                  ?
-                </div>
+                <div className="w-14 h-14 bg-yellow-500/20 text-yellow-300 rounded-full flex items-center justify-center text-2xl mb-4 border border-yellow-500/40">?</div>
                 <h4 className="text-xl font-bold text-[#E9D7E9] mb-2">¿Prenda sin logo?</h4>
-                <p className="text-gray-300 mb-6 text-sm">No cargaste ningún logo. ¿Querés agregar esta prenda totalmente lisa al pedido?</p>
-
+                <p className="text-gray-300 mb-6 text-sm">No cargaste ningún logo. ¿Querés agregar esta prenda totalmente lisa?</p>
                 <div className="flex gap-3 w-full">
-                  <button onClick={() => setCustomAlert('none')} className="flex-1 py-2 bg-transparent border border-[#E9D7E9]/50 text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10 transition-colors">
-                    Cancelar
-                  </button>
-                  <button onClick={ejecutarGuardado} className="flex-1 py-2 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">
-                    Sí, agregar
-                  </button>
+                  <button onClick={() => setCustomAlert('none')} className="flex-1 py-2 bg-transparent border border-[#E9D7E9]/50 text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10 transition-colors">Cancelar</button>
+                  <button onClick={ejecutarGuardado} className="flex-1 py-2 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">Sí, agregar</button>
                 </div>
               </div>
             </div>
@@ -471,14 +519,10 @@ export default function SimuladorCanvas() {
           {customAlert === 'success_added' && (
             <div className="bg-[#3a2a31] p-6 rounded-xl w-full max-w-xs border border-green-500/50 shadow-2xl scale-100 animate-in zoom-in-95 duration-200">
               <div className="flex flex-col items-center text-center">
-                <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center text-2xl mb-3 border border-green-500/50">
-                  ✓
-                </div>
+                <div className="w-12 h-12 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center text-2xl mb-3 border border-green-500/50">✓</div>
                 <h4 className="text-lg font-bold text-white mb-1">¡Prenda Agregada!</h4>
                 <p className="text-gray-400 text-xs mb-4">Podés seguir diseñando otra.</p>
-                <button onClick={() => setCustomAlert('none')} className="w-full py-2 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded text-sm hover:bg-white">
-                  Entendido
-                </button>
+                <button onClick={() => setCustomAlert('none')} className="w-full py-2 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded text-sm hover:bg-white">Entendido</button>
               </div>
             </div>
           )}
@@ -488,12 +532,10 @@ export default function SimuladorCanvas() {
       {showModal && (
         <div className="fixed inset-0 bg-black/80 flex items-end sm:items-center justify-center z-50 p-0 sm:p-4 backdrop-blur-sm overflow-y-auto">
           <div className="bg-[#3a2a31] p-6 sm:p-8 rounded-t-2xl sm:rounded-xl w-full max-w-md border-t sm:border border-[#E9D7E9]/30 shadow-2xl animate-slide-up sm:animate-none">
-
             {submissionStatus === 'idle' && (
               <>
                 <h3 className="text-2xl font-bold text-[#E9D7E9] mb-2">¡Ya casi estamos!</h3>
                 <p className="text-gray-300 mb-6 text-sm">Vas a solicitar presupuesto por <strong>{cart.length} prendas</strong> distintas.</p>
-
                 <form onSubmit={submitForm} className="flex flex-col gap-4">
                   <div>
                     <label className="text-white text-sm font-semibold">Nombre y Apellido</label>
@@ -507,7 +549,6 @@ export default function SimuladorCanvas() {
                     <label className="text-white text-sm font-semibold">Mensaje General</label>
                     <textarea disabled={loading} className="w-full p-3 rounded bg-[#4a3840] border border-[#745968] text-white focus:border-[#E9D7E9] outline-none h-20 resize-none disabled:opacity-50" value={clientData.message} onChange={e => setClientData({ ...clientData, message: e.target.value })} placeholder="Ej: Necesito 20 unidades de cada una..." />
                   </div>
-
                   <div className="flex gap-3 mt-4 mb-4 sm:mb-0">
                     <button type="button" onClick={() => setShowModal(false)} disabled={loading} className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10 disabled:opacity-50">Cancelar</button>
                     <button type="submit" disabled={loading} className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors disabled:opacity-80 flex items-center justify-center gap-2">
@@ -517,7 +558,7 @@ export default function SimuladorCanvas() {
                 </form>
               </>
             )}
-
+            {/* ... Mensajes de success/error iguales ... */}
             {submissionStatus === 'success' && (
               <div className="flex flex-col items-center text-center py-4">
                 <div className="w-16 h-16 bg-green-500/20 text-green-400 rounded-full flex items-center justify-center text-3xl mb-4 border border-green-500/50">✓</div>
@@ -526,15 +567,14 @@ export default function SimuladorCanvas() {
                 <button onClick={() => setShowModal(false)} className="w-full py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">Cerrar</button>
               </div>
             )}
-
             {submissionStatus === 'error' && (
               <div className="flex flex-col items-center text-center py-4">
                 <div className="w-16 h-16 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center text-3xl mb-4 border border-red-500/50">!</div>
                 <h3 className="text-2xl font-bold text-white mb-2">Hubo un problema</h3>
                 <p className="text-gray-300 mb-6">No pudimos enviar todos los diseños. Verificá tu conexión e intentá de nuevo.</p>
                 <div className="flex gap-3 w-full">
-                  <button onClick={() => setShowModal(false)} className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10">Cerrar</button>
-                  <button onClick={() => setSubmissionStatus('idle')} className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">Reintentar</button>
+                   <button onClick={() => setShowModal(false)} className="flex-1 py-3 bg-transparent border border-[#E9D7E9] text-[#E9D7E9] rounded-lg hover:bg-[#E9D7E9]/10">Cerrar</button>
+                   <button onClick={() => setSubmissionStatus('idle')} className="flex-1 py-3 bg-[#E9D7E9] text-[#3a2a31] font-bold rounded-lg hover:bg-white transition-colors">Reintentar</button>
                 </div>
               </div>
             )}
